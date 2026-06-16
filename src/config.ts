@@ -18,7 +18,7 @@ function _detectScriptDir(): string {
   return process.cwd();
 }
 
-export interface TenantConfig {
+export interface ConnectionConfig {
   id:           string;
   defaultDestination?: string;
   // バックエンド（relay）の直接 URL（approuter ではなく backend host）
@@ -33,8 +33,8 @@ export interface TenantConfig {
 }
 
 export interface AppConfig {
-  defaultTenant?: string;
-  tenants: Record<string, Omit<TenantConfig, 'id'>>;
+  defaultConnection?: string;
+  connections: Record<string, Omit<ConnectionConfig, 'id'>>;
 }
 
 export function loadConfig(): AppConfig {
@@ -55,13 +55,13 @@ export function loadConfig(): AppConfig {
   return JSON.parse(raw);
 }
 
-export function getTenant(cfg: AppConfig, id?: string): TenantConfig {
-  const tid = id || cfg.defaultTenant;
-  if (!tid) throw new Error('接続キー未指定（defaultTenant 未設定）');
-  const t = cfg.tenants[tid];
-  if (!t) throw new Error(`接続 "${tid}" が connections.json にありません`);
+export function getConnection(cfg: AppConfig, id?: string): ConnectionConfig {
+  const cid = id || cfg.defaultConnection;
+  if (!cid) throw new Error('接続キー未指定（defaultConnection 未設定）');
+  const c = cfg.connections[cid];
+  if (!c) throw new Error(`接続 "${cid}" が connections.json にありません`);
   for (const k of ['relayUrl', 'clientId', 'clientSecret', 'tokenUrl'] as const) {
-    if (!t[k]) throw new Error(`接続 "${tid}" の ${k} が未設定`);
+    if (!c[k]) throw new Error(`接続 "${cid}" の ${k} が未設定`);
   }
-  return { id: tid, ...t };
+  return { id: cid, ...c };
 }

@@ -1,6 +1,6 @@
 {
-  "defaultTenant": "primary",
-  "tenants": {
+  "defaultConnection": "primary",
+  "connections": {
     "primary": {
       "defaultDestination": "<SID>",
       "relayUrl":     "https://your-backend.example.com",
