@@ -7,7 +7,7 @@
 （Security タブ → Report a vulnerability）からご連絡ください。
 
 - 初回応答: 5 営業日以内を目標
-- 連絡先: `<SECURITY_CONTACT>`（確定後に置換）
+- 連絡先: contact@hugoconsulting.com
 
 ## 取り扱い上の注意 / Handling
 
