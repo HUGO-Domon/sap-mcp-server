@@ -22,16 +22,16 @@ stays controlled and auditable.
 |---|---|
 | **Access scope** | Restrict access to **Full** or **Reference-only (read-only)**. |
 | **Landscape** | Per-landscape access control for **DEV / QAS / PRD**. |
-| **Authentication** | Connects only to OAuth2 (`client_credentials`)-protected endpoints; SAP credentials are never held by the client. |
+| **Authentication** | Connects only over a secure, authenticated channel; SAP credentials are never held by the client. |
 | **Secret handling** | Connection secrets are kept **local only** and are **never** committed or embedded in the binary. |
 
 ## Capabilities
 
 - **SAP ABAP**
   - **Run any remote-enabled Function Module / BAPI without cumbersome web service configuration.**
-  - Function Modules (RFC / BAPI) — `sap_call_fm`
-  - Table read (RFC_READ_TABLE-equivalent) — `sap_select_table`
-  - ADT SQL / Open SQL / DDIC preview — `sap_adt_freestyle` / `sap_adt_osql` / `sap_adt_ddic`
+  - Function Modules (RFC / BAPI)
+  - Table read (RFC_READ_TABLE-equivalent)
+  - ADT SQL / Open SQL / DDIC preview
 - **SAP BTP services**
   - Cloud Identity Services (IAS) Admin / SCIM
   - Identity Provisioning (IPS) Jobs / JobLogs
@@ -74,7 +74,7 @@ npm run build:bin:linux # Node SEA blob + postject → single binary
 ## Backend
 
 Actual SAP communication and the security controls above are performed by a **backend** that this
-server connects to over OAuth2. A **compatible backend is required** (Bring Your Own Backend).
+server connects to over a secure channel. A **compatible backend is required** (Bring Your Own Backend).
 
 - The REST contract a backend must satisfy is defined in [docs/BACKEND-CONTRACT.md](docs/BACKEND-CONTRACT.md).
 - A reference backend is **not** included in this repository. A production-ready backend

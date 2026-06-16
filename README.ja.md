@@ -20,16 +20,16 @@ SAP への AI アクセスを統制・監査可能に保つため、セキュリ
 |---|---|
 | **権限制御** | 操作を **フル** か **参照のみ（read-only）** に権限制御できます。 |
 | **ランドスケープ** | **DEV / QAS / PRD** のランドスケープごとにアクセスを制御できます。 |
-| **認証** | OAuth2 (`client_credentials`) で保護されたエンドポイントにのみ接続。SAP の資格情報をクライアントが保持しません。 |
+| **認証** | セキュアな認証付き接続でのみアクセス。SAP の資格情報をクライアントが保持しません。 |
 | **機密管理** | 接続情報はローカルのみで管理し、リポジトリやバイナリに **埋め込みません**。 |
 
 ## できること
 
 - **SAP ABAP**
   - **煩雑な Web サービス設定なしで、任意の汎用モジュール（RFC 対応 FM）/ BAPI のリモート実行を可能にします。**
-  - 汎用モジュール（RFC / BAPI） — `sap_call_fm`
-  - テーブル読取（RFC_READ_TABLE 相当） — `sap_select_table`
-  - ADT SQL / Open SQL / DDIC プレビュー — `sap_adt_freestyle` / `sap_adt_osql` / `sap_adt_ddic`
+  - 汎用モジュール（RFC / BAPI）
+  - テーブル読取（RFC_READ_TABLE 相当）
+  - ADT SQL / Open SQL / DDIC プレビュー
 - **SAP BTP サービス**
   - Cloud Identity Services (IAS) Admin / SCIM
   - Identity Provisioning (IPS) Jobs / JobLogs
@@ -71,7 +71,7 @@ npm run build:bin:linux # Node SEA blob + postject → 単一バイナリ
 
 ## バックエンド
 
-実際の SAP 通信と上記のセキュリティ制御は、本サーバが OAuth2 で接続する **バックエンド** が担います。
+実際の SAP 通信と上記のセキュリティ制御は、本サーバが **セキュアな接続** で接続する **バックエンド** が担います。
 利用には **互換バックエンドが必要** です（Bring Your Own Backend）。
 
 - バックエンドが満たすべき REST 契約は [docs/BACKEND-CONTRACT.md](docs/BACKEND-CONTRACT.md) を参照してください。
