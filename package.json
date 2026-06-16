@@ -1,31 +1,33 @@
 {
   "name": "sap-mcp-server",
   "version": "0.1.0",
+  "private": true,
   "description": "Independent open-source MCP server for SAP (ABAP / BTP) via a backend relay",
-  "type": "module",
   "license": "Apache-2.0",
+  "type": "module",
+  "main": "dist/index.js",
   "bin": {
-    "sap-mcp-server": "build/bundle.cjs"
+    "sap-mcp-server": "dist/index.js"
   },
-  "files": [
-    "build/bundle.cjs",
-    "connections.example.json",
-    "README.md",
-    "LICENSE",
-    "NOTICE"
-  ],
   "scripts": {
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "bundle": "esbuild src/index.ts --bundle --platform=node --target=node22 --format=cjs --outfile=build/bundle.cjs",
-    "build:sea": "node --experimental-sea-config sea-config.json",
-    "build:bin:linux": "npm run bundle && npm run build:sea && cp \"$(command -v node)\" build/sap-mcp-server-linux && npx postject build/sap-mcp-server-linux NODE_SEA_BLOB build/sea.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 && chmod +x build/sap-mcp-server-linux"
+    "build":             "tsc",
+    "start":             "node dist/index.js",
+    "dev":               "tsc --watch",
+    "build:bundle":      "esbuild src/index.ts --bundle --platform=node --target=node22 --format=cjs --outfile=build/bundle.cjs",
+    "build:blob":        "node --experimental-sea-config sea-config.json",
+    "build:bin:linux":   "npm run build:bundle && npm run build:blob && cp $(command -v node) build/sap-mcp-server-linux && npx postject build/sap-mcp-server-linux NODE_SEA_BLOB build/sea.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 && chmod +x build/sap-mcp-server-linux",
+    "build:bin:win":     "npm run build:bundle && npm run build:blob && node -e \"require('fs').copyFileSync(process.execPath,'build/sap-mcp-server-win.exe')\" && npx postject build/sap-mcp-server-win.exe NODE_SEA_BLOB build/sea.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2",
+    "build:bin":         "npm run build:bin:linux"
   },
-  "engines": {
-    "node": ">=22"
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "http-proxy-agent": "^9.0.0",
+    "node-fetch": "^3.3.2"
   },
   "devDependencies": {
-    "esbuild": "^0.23.0",
+    "@types/node": "^25.9.1",
+    "esbuild": "^0.28.0",
     "postject": "^1.0.0-alpha.6",
-    "typescript": "^5.5.0"
+    "typescript": "^6.0.3"
   }
 }
