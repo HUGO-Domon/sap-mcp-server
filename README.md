@@ -1,76 +1,104 @@
 # sap-mcp-server
 
-> SAP（ABAP / BTP）を MCP 対応 AI クライアントから操作するための Model Context Protocol サーバ。
-> An independent, open-source MCP server for SAP, distributed as a single self-contained binary.
+> Securely operate SAP ABAP and BTP services from MCP-compatible AI clients.
+> MCP 対応 AI クライアントから SAP ABAP / BTP サービスを **安全に** 操作するための Model Context Protocol サーバ。
 
-`Claude Code` / `Cursor` / その他 MCP 対応クライアントから、SAP の ABAP・BTP 系 API を
-横断的に呼び出すための MCP サーバです。実通信はユーザ環境のバックエンド（relay）経由で行う
-薄いラッパー構成で、配布は **Node.js SEA による単一バイナリ**で提供します。
+Connect to SAP **ABAP** and **BTP services** from general MCP-compatible AI clients such as
+**Claude Code**, **Codex**, and **Gemini CLI**. Distributed as a single self-contained binary
+(Node.js SEA) for Linux and Windows.
 
-> ⚠️ **Scaffold 段階です。** 本リポジトリは公開準備中の実装雛形であり、
-> サーバ本体（`src/`）はこれから実装します。一般公開（public 化）は準備完了後に行います。
+**Claude Code** / **Codex** / **Gemini CLI** などの汎用的な MCP 対応クライアントから、SAP の
+**ABAP** および **BTP サービス**へ接続できます。配布は **Node.js SEA による単一バイナリ**（Linux / Windows）です。
 
 ---
 
-## 特長
+## 🔒 Security / セキュリティ
 
-- 単一バイナリ配布（Node ランタイム不要）— Linux / Windows
-- 接続情報はローカルの `connections.json` で管理（リポジトリには含めない）
-- 環境タグ（DEV / QAS / PRD）による操作スコープ制御を想定
+Security is enforced in **multiple layers (defense in depth)**, so AI-driven access to SAP
+stays controlled and auditable.
 
-## アーキテクチャ（バックエンド前提）
+SAP への AI アクセスを統制・監査可能に保つため、セキュリティは **多段階（多層防御）** で強化されています。
 
-本サーバは **薄いリレークライアント**です。実際の SAP 通信（ABAP RFC / ADT / BTP 各 API）は、
-ユーザ環境にデプロイされた **バックエンド（relay）** が担います。本サーバはそのバックエンドの
-`relayBasePath`（既定 `/api/mcp`）配下のエンドポイントへ OAuth2 で接続して中継するだけです。
+| Layer / 層 | Control / 制御 |
+|---|---|
+| **Access scope / 権限制御** | Restrict to **Full** or **Reference‑only (read‑only)** — 操作を **フル** か **参照のみ** に権限制御できます。 |
+| **Landscape / ランドスケープ** | Per‑landscape access control for **DEV / QAS / PRD** — **DEV / QAS / PRD** のランドスケープごとにアクセスを制御できます。 |
+| **Authentication / 認証** | OAuth2 (`client_credentials`) で保護されたエンドポイントにのみ接続。SAP の資格情報をクライアントが保持しません。 |
+| **Secret handling / 機密管理** | Connection secrets are kept **local only** and are **never** committed or embedded in the binary — 接続情報はローカルのみで管理し、リポジトリやバイナリに埋め込みません。 |
 
-```
-MCP クライアント ──stdio──> sap-mcp-server ──HTTPS(OAuth2)──> あなたのバックエンド ──> SAP / BTP
-```
+## Capabilities / できること
 
-そのため **互換バックエンドが無い状態では動作しません（Bring Your Own Backend）**。
+- **SAP ABAP**
+  - Function Modules (RFC / BAPI) — `sap_call_fm`
+  - Table read (RFC_READ_TABLE 相当) — `sap_select_table`
+  - ADT SQL / Open SQL / DDIC preview — `sap_adt_freestyle` / `sap_adt_osql` / `sap_adt_ddic`
+- **SAP BTP services / BTP サービス**
+  - Cloud Identity Services (IAS) Admin / SCIM
+  - Identity Provisioning (IPS) Jobs / JobLogs
+  - Cloud Foundry API v3
+  - Build Work Zone (Content API)
+  - Cloud Transport Management (cTMS) v2
+  - Forms Service by Adobe
+  - Cloud Information Service (CIS Central)
+  - Integration Suite (CPI) Audit / Monitoring
 
-- バックエンドが満たすべき REST 契約は [docs/BACKEND-CONTRACT.md](docs/BACKEND-CONTRACT.md) に定義しています。
-  これに沿って自前で実装すれば、本 OSS サーバから利用できます。
-- リファレンス実装のバックエンドは本リポジトリには含まれません。**導入支援・本番運用向けのバックエンドは、
-  別途コンサルティング契約にて提供します**（構築・接続設定・運用込み）。お問い合わせは Issue / 各種連絡先まで。
+## Install / インストール
 
-## インストール
-
+Download the platform binary from GitHub Releases.
 GitHub Release の Assets からプラットフォーム別バイナリを取得します。
 
 ```bash
-# 例（public 化後に有効）
 curl -fsSL https://github.com/HUGO-Domon/sap-mcp-server/releases/latest/download/install-sap-mcp.sh | bash
 ```
 
-> 配布バイナリは未署名の場合があります。Windows SmartScreen / macOS Gatekeeper の
-> 警告と回避手順は [docs/](docs/) を参照してください。各 Asset には `*.sha256` を添付します。
+> Binaries may be unsigned. See [docs/](docs/) for Windows SmartScreen / macOS Gatekeeper notes.
+> Each asset ships with a `*.sha256` checksum.
+> 配布バイナリは未署名の場合があります。各 Asset には `*.sha256` を添付します。
 
-## 設定
+## Configuration / 設定
 
+Copy `connections.example.json` to `connections.json` and fill in your environment.
 `connections.example.json` をコピーして `connections.json` を作成し、自環境の値を設定します。
 
 ```bash
 cp connections.example.json ~/.config/sap-mcp-server/connections.json
 ```
 
-探索順: `$SAP_MCP_CONFIG` → `~/.config/sap-mcp-server/connections.json` → 実行ファイル近傍。
+Lookup order / 探索順: `$SAP_MCP_CONFIG` → `~/.config/sap-mcp-server/connections.json` → next to the executable.
 
-## ビルド（開発者向け）
+## Build (developers) / ビルド（開発者向け）
 
 ```bash
 npm ci
-npm run bundle        # esbuild で CJS バンドル
-npm run build:sea     # Node SEA blob 生成 → postject でバイナリ化
+npm run build:bundle    # esbuild → CJS bundle
+npm run build:bin:linux # Node SEA blob + postject → single binary
 ```
 
-## セキュリティ
+## Backend / バックエンド
 
+Actual SAP communication and the security controls above are performed by a **backend** that this
+server connects to over OAuth2. A **compatible backend is required** (Bring Your Own Backend).
+
+実際の SAP 通信と上記のセキュリティ制御は、本サーバが OAuth2 で接続する **バックエンド** が担います。
+利用には **互換バックエンドが必要** です（Bring Your Own Backend）。
+
+- The REST contract a backend must satisfy is defined in [docs/BACKEND-CONTRACT.md](docs/BACKEND-CONTRACT.md).
+  バックエンドが満たすべき REST 契約は [docs/BACKEND-CONTRACT.md](docs/BACKEND-CONTRACT.md) を参照してください。
+- A reference backend is **not** included in this repository. A production‑ready backend
+  (setup, connection configuration, and operation) is **provided separately under a consulting engagement**.
+  リファレンスバックエンドは本リポジトリには含まれません。導入支援・本番運用向けのバックエンドは
+  **別途コンサルティング契約にて提供**します。お問い合わせ: contact@hugoconsulting.com
+
+## Security Policy / セキュリティ報告
+
+Please report vulnerabilities via [SECURITY.md](SECURITY.md).
 脆弱性の報告は [SECURITY.md](SECURITY.md) を参照してください。
 
-## ライセンス
+## License / ライセンス
 
-[Apache License 2.0](LICENSE)。SAP および SAP 製品名は SAP SE の商標です。
-本プロジェクトは SAP SE とは無関係であり、SAP SE による承認・後援を受けていません。
-詳細は [NOTICE](NOTICE) を参照してください。
+[Apache License 2.0](LICENSE).
+"SAP" and SAP product names are trademarks of SAP SE. This project is not affiliated with,
+endorsed by, or sponsored by SAP SE. See [NOTICE](NOTICE).
+
+[Apache License 2.0](LICENSE)。SAP および SAP 製品名は SAP SE の商標です。本プロジェクトは
+SAP SE とは無関係であり、承認・後援を受けていません。詳細は [NOTICE](NOTICE) を参照してください。
