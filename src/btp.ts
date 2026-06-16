@@ -10,7 +10,7 @@
  */
 
 import { relay } from './destinations.js';
-import type { TenantConfig } from './config.js';
+import type { ConnectionConfig } from './config.js';
 
 export interface BtpCallArgs {
   destination: string;
@@ -22,10 +22,10 @@ export interface BtpCallArgs {
   timeoutMs?:  number;
 }
 
-async function _call(tenant: TenantConfig, endpoint: string, args: BtpCallArgs) {
+async function _call(connection: ConnectionConfig, endpoint: string, args: BtpCallArgs) {
   if (!args.destination) throw new Error('destination が必要です');
   if (!args.path)        throw new Error('path が必要です');
-  return relay(tenant, endpoint, {
+  return relay(connection, endpoint, {
     destination: args.destination,
     method:      (args.method || 'GET').toUpperCase(),
     path:        args.path,
@@ -47,41 +47,41 @@ function _ensureScimAcceptHeader(args: BtpCallArgs): BtpCallArgs {
 }
 
 // IAS Admin API (SCIM Users / Groups / Applications / Schemas / Tenant Setting)
-export async function callIasAdmin(tenant: TenantConfig, args: BtpCallArgs) {
-  return _call(tenant, '/call-ias-admin', _ensureScimAcceptHeader(args));
+export async function callIasAdmin(connection: ConnectionConfig, args: BtpCallArgs) {
+  return _call(connection, '/call-ias-admin', _ensureScimAcceptHeader(args));
 }
 
 // IPS Jobs / JobLogs（IAS Destination を流用）
-export async function callIpsJob(tenant: TenantConfig, args: BtpCallArgs) {
-  return _call(tenant, '/call-ips-job', _ensureScimAcceptHeader(args));
+export async function callIpsJob(connection: ConnectionConfig, args: BtpCallArgs) {
+  return _call(connection, '/call-ips-job', _ensureScimAcceptHeader(args));
 }
 
 // Cloud Foundry API v3 (apps / orgs / spaces / service_instances / service_bindings ...)
-export async function callCfApi(tenant: TenantConfig, args: BtpCallArgs) {
-  return _call(tenant, '/call-cf-api', args);
+export async function callCfApi(connection: ConnectionConfig, args: BtpCallArgs) {
+  return _call(connection, '/call-cf-api', args);
 }
 
 // Build Work Zone Content API (tiles / groups / roles / pages / content_packages)
-export async function callBwzContent(tenant: TenantConfig, args: BtpCallArgs) {
-  return _call(tenant, '/call-bwz-content', args);
+export async function callBwzContent(connection: ConnectionConfig, args: BtpCallArgs) {
+  return _call(connection, '/call-bwz-content', args);
 }
 
 // Cloud Transport Management v2 API (nodes / transportRequests / imports / queues)
-export async function callCtmsApi(tenant: TenantConfig, args: BtpCallArgs) {
-  return _call(tenant, '/call-ctms-api', args);
+export async function callCtmsApi(connection: ConnectionConfig, args: BtpCallArgs) {
+  return _call(connection, '/call-ctms-api', args);
 }
 
 // Forms Service by Adobe REST API (/v1/forms / ADS 操作)
-export async function callFormsApi(tenant: TenantConfig, args: BtpCallArgs) {
-  return _call(tenant, '/call-forms-api', args);
+export async function callFormsApi(connection: ConnectionConfig, args: BtpCallArgs) {
+  return _call(connection, '/call-forms-api', args);
 }
 
 // SAP Cloud Information Service (CIS Central) / Global Account / Subaccount 等
-export async function callCisApi(tenant: TenantConfig, args: BtpCallArgs) {
-  return _call(tenant, '/call-cis-api', args);
+export async function callCisApi(connection: ConnectionConfig, args: BtpCallArgs) {
+  return _call(connection, '/call-cis-api', args);
 }
 
 // SAP Integration Suite (CPI) Audit API / iFlow / Channel / Logs
-export async function callCpiApi(tenant: TenantConfig, args: BtpCallArgs) {
-  return _call(tenant, '/call-cpi-api', args);
+export async function callCpiApi(connection: ConnectionConfig, args: BtpCallArgs) {
+  return _call(connection, '/call-cpi-api', args);
 }

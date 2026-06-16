@@ -7,7 +7,7 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 
-import { loadConfig, getTenant }                   from './config.js';
+import { loadConfig, getConnection }               from './config.js';
 import { listDestinations }                        from './destinations.js';
 import { callFm, callSelectTable, callAdtFreestyle, callAdtOsql, callAdtDdic } from './abap.js';
 import {
@@ -37,7 +37,7 @@ const TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant: { type: 'string', description: '接続キー（connections.json の tenants のキー）。省略時はデフォルト' },
+        connection: { type: 'string', description: '接続キー（connections.json の connections のキー）。省略時はデフォルト' },
       },
     },
   },
@@ -48,7 +48,7 @@ const TOOLS = [
       type: 'object',
       properties: {
         destination: { type: 'string', description: 'BTP Destination 名' },
-        tenant:      { type: 'string' },
+        connection:  { type: 'string' },
       },
       required: ['destination'],
     },
@@ -70,8 +70,8 @@ const TOOLS = [
         tabparams: { type: 'array',  items: { type: 'object' }, description: 'TABLES。{name, value=行型名, rows?=入力JSON}' },
         client:    { type: 'string', description: 'sap-client（マンダント）' },
         commit:    { type: 'boolean', description: 'true で BAPI_TRANSACTION_COMMIT 実行' },
-        destination: { type: 'string', description: 'BTP Destination 名（省略時はセッションデフォルト → tenant.defaultDestination）' },
-        tenant:      { type: 'string' },
+        destination: { type: 'string', description: 'BTP Destination 名（省略時はセッションデフォルト → connection.defaultDestination）' },
+        connection:  { type: 'string' },
       },
       required: ['fm'],
     },
@@ -88,7 +88,7 @@ const TOOLS = [
         maxrows: { type: 'integer', description: '最大行数（既定 1000）' },
         client:  { type: 'string' },
         destination: { type: 'string' },
-        tenant:      { type: 'string' },
+        connection:  { type: 'string' },
       },
       required: ['table'],
     },
@@ -103,7 +103,7 @@ const TOOLS = [
         rowCount: { type: 'integer', description: '最大行数（既定 100、上限 5000）' },
         client:   { type: 'string',  description: 'sap-client（マンダント）' },
         destination: { type: 'string' },
-        tenant:      { type: 'string' },
+        connection:  { type: 'string' },
       },
       required: ['sql'],
     },
@@ -118,7 +118,7 @@ const TOOLS = [
         rowCount: { type: 'integer', description: '最大行数（既定 100、上限 5000）' },
         client:   { type: 'string' },
         destination: { type: 'string' },
-        tenant:      { type: 'string' },
+        connection:  { type: 'string' },
       },
       required: ['sql'],
     },
@@ -133,7 +133,7 @@ const TOOLS = [
         rowCount: { type: 'integer', description: '最大行数（既定 100、上限 5000）' },
         client:   { type: 'string' },
         destination: { type: 'string' },
-        tenant:      { type: 'string' },
+        connection:  { type: 'string' },
       },
       required: ['ddicName'],
     },
@@ -151,14 +151,14 @@ const TOOLS = [
         body:        { description: 'リクエストボディ（JSON-able）' },
         headers:     { type: 'object',  description: '追加ヘッダ（Accept: application/scim+json 等）' },
         timeoutMs:   { type: 'integer', description: 'タイムアウト (ms)。既定 60000' },
-        tenant:      { type: 'string' },
+        connection:  { type: 'string' },
       },
       required: ['destination', 'path'],
     },
   },
   {
     name: 'sap_call_ips_job',
-    description: 'SAP Identity Provisioning Service (IPS) Jobs / JobLogs API を呼び出す。IAS Destination を流用（同テナント内 /service/scim/Jobs 系）。公式 API は Jobs と JobLogs の 2 リソースのみ。',
+    description: 'SAP Identity Provisioning Service (IPS) Jobs / JobLogs API を呼び出す。IAS Destination を流用（同一テナント内 /service/scim/Jobs 系）。公式 API は Jobs と JobLogs の 2 リソースのみ。',
     inputSchema: {
       type: 'object',
       properties: {
@@ -169,7 +169,7 @@ const TOOLS = [
         body:        { description: 'リクエストボディ' },
         headers:     { type: 'object' },
         timeoutMs:   { type: 'integer' },
-        tenant:      { type: 'string' },
+        connection:  { type: 'string' },
       },
       required: ['destination', 'path'],
     },
@@ -187,7 +187,7 @@ const TOOLS = [
         body:        { description: 'リクエストボディ（POST/PATCH 用 JSON）' },
         headers:     { type: 'object' },
         timeoutMs:   { type: 'integer' },
-        tenant:      { type: 'string' },
+        connection:  { type: 'string' },
       },
       required: ['destination', 'path'],
     },
@@ -205,7 +205,7 @@ const TOOLS = [
         body:        { description: 'リクエストボディ' },
         headers:     { type: 'object' },
         timeoutMs:   { type: 'integer' },
-        tenant:      { type: 'string' },
+        connection:  { type: 'string' },
       },
       required: ['destination', 'path'],
     },
@@ -223,7 +223,7 @@ const TOOLS = [
         body:        { description: 'リクエストボディ（import は { transportRequests: [\'<id>\'] }）' },
         headers:     { type: 'object' },
         timeoutMs:   { type: 'integer' },
-        tenant:      { type: 'string' },
+        connection:  { type: 'string' },
       },
       required: ['destination', 'path'],
     },
@@ -241,7 +241,7 @@ const TOOLS = [
         body:        { description: 'リクエストボディ（XDP/JSON/PDF）' },
         headers:     { type: 'object' },
         timeoutMs:   { type: 'integer' },
-        tenant:      { type: 'string' },
+        connection:  { type: 'string' },
       },
       required: ['destination', 'path'],
     },
@@ -259,7 +259,7 @@ const TOOLS = [
         body:        { description: 'リクエストボディ' },
         headers:     { type: 'object' },
         timeoutMs:   { type: 'integer' },
-        tenant:      { type: 'string' },
+        connection:  { type: 'string' },
       },
       required: ['destination', 'path'],
     },
@@ -277,7 +277,7 @@ const TOOLS = [
         body:        { description: 'リクエストボディ' },
         headers:     { type: 'object' },
         timeoutMs:   { type: 'integer' },
-        tenant:      { type: 'string' },
+        connection:  { type: 'string' },
       },
       required: ['destination', 'path'],
     },
@@ -286,11 +286,11 @@ const TOOLS = [
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }));
 
-function resolveDestName(args: any, tenantId: string, tenantDefault?: string): string {
+function resolveDestName(args: any, connectionId: string, connectionDefault?: string): string {
   if (args.destination) return args.destination;
   const cur = getCurrentDestination();
-  if (cur && cur.tenant === tenantId) return cur.destination;
-  if (tenantDefault) return tenantDefault;
+  if (cur && cur.connection === connectionId) return cur.destination;
+  if (connectionDefault) return connectionDefault;
   throw new Error('destination 未指定。sap_use_destination で設定するか、引数で指定してください。');
 }
 
@@ -299,26 +299,26 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
   try {
     switch (name) {
       case 'sap_list_destinations': {
-        const tenant = getTenant(config, args.tenant);
-        const list   = await listDestinations(tenant);
+        const connection = getConnection(config, args.connection);
+        const list       = await listDestinations(connection);
         return { content: [{ type: 'text', text: JSON.stringify(list, null, 2) }] };
       }
 
       case 'sap_use_destination': {
-        const tenant = getTenant(config, args.tenant);
-        setDestination(tenant.id, args.destination);
-        return { content: [{ type: 'text', text: `デフォルト Destination を ${args.destination} に切り替えました（接続=${tenant.id}）` }] };
+        const connection = getConnection(config, args.connection);
+        setDestination(connection.id, args.destination);
+        return { content: [{ type: 'text', text: `デフォルト Destination を ${args.destination} に切り替えました（接続=${connection.id}）` }] };
       }
 
       case 'sap_current_destination': {
         const cur = getCurrentDestination();
-        return { content: [{ type: 'text', text: cur ? `${cur.tenant} / ${cur.destination}` : '（未設定）' }] };
+        return { content: [{ type: 'text', text: cur ? `${cur.connection} / ${cur.destination}` : '（未設定）' }] };
       }
 
       case 'sap_call_fm': {
-        const tenant   = getTenant(config, args.tenant);
-        const destName = resolveDestName(args, tenant.id, tenant.defaultDestination);
-        const result   = await callFm(tenant, destName, {
+        const connection = getConnection(config, args.connection);
+        const destName   = resolveDestName(args, connection.id, connection.defaultDestination);
+        const result     = await callFm(connection, destName, {
           fm:        args.fm,
           importing: args.importing,
           exporting: args.exporting,
@@ -330,9 +330,9 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       }
 
       case 'sap_select_table': {
-        const tenant   = getTenant(config, args.tenant);
-        const destName = resolveDestName(args, tenant.id, tenant.defaultDestination);
-        const rows     = await callSelectTable(tenant, destName, {
+        const connection = getConnection(config, args.connection);
+        const destName   = resolveDestName(args, connection.id, connection.defaultDestination);
+        const rows       = await callSelectTable(connection, destName, {
           table:   args.table,
           fields:  args.fields,
           where:   args.where,
@@ -343,9 +343,9 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       }
 
       case 'sap_adt_freestyle': {
-        const tenant   = getTenant(config, args.tenant);
-        const destName = resolveDestName(args, tenant.id, tenant.defaultDestination);
-        const result   = await callAdtFreestyle(tenant, destName, {
+        const connection = getConnection(config, args.connection);
+        const destName   = resolveDestName(args, connection.id, connection.defaultDestination);
+        const result     = await callAdtFreestyle(connection, destName, {
           sql:      args.sql,
           client:   args.client,
           rowCount: args.rowCount,
@@ -354,9 +354,9 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       }
 
       case 'sap_adt_osql': {
-        const tenant   = getTenant(config, args.tenant);
-        const destName = resolveDestName(args, tenant.id, tenant.defaultDestination);
-        const result   = await callAdtOsql(tenant, destName, {
+        const connection = getConnection(config, args.connection);
+        const destName   = resolveDestName(args, connection.id, connection.defaultDestination);
+        const result     = await callAdtOsql(connection, destName, {
           sql:      args.sql,
           client:   args.client,
           rowCount: args.rowCount,
@@ -365,9 +365,9 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       }
 
       case 'sap_adt_ddic': {
-        const tenant   = getTenant(config, args.tenant);
-        const destName = resolveDestName(args, tenant.id, tenant.defaultDestination);
-        const result   = await callAdtDdic(tenant, destName, {
+        const connection = getConnection(config, args.connection);
+        const destName   = resolveDestName(args, connection.id, connection.defaultDestination);
+        const result     = await callAdtDdic(connection, destName, {
           ddicName: args.ddicName,
           client:   args.client,
           rowCount: args.rowCount,
@@ -376,8 +376,8 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       }
 
       case 'sap_call_ias_admin': {
-        const tenant = getTenant(config, args.tenant);
-        const result = await callIasAdmin(tenant, {
+        const connection = getConnection(config, args.connection);
+        const result = await callIasAdmin(connection, {
           destination: args.destination,
           method:      args.method,
           path:        args.path,
@@ -390,8 +390,8 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       }
 
       case 'sap_call_ips_job': {
-        const tenant = getTenant(config, args.tenant);
-        const result = await callIpsJob(tenant, {
+        const connection = getConnection(config, args.connection);
+        const result = await callIpsJob(connection, {
           destination: args.destination,
           method:      args.method,
           path:        args.path,
@@ -404,8 +404,8 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       }
 
       case 'sap_call_cf_api': {
-        const tenant = getTenant(config, args.tenant);
-        const result = await callCfApi(tenant, {
+        const connection = getConnection(config, args.connection);
+        const result = await callCfApi(connection, {
           destination: args.destination,
           method:      args.method,
           path:        args.path,
@@ -418,8 +418,8 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       }
 
       case 'sap_call_bwz_content': {
-        const tenant = getTenant(config, args.tenant);
-        const result = await callBwzContent(tenant, {
+        const connection = getConnection(config, args.connection);
+        const result = await callBwzContent(connection, {
           destination: args.destination,
           method:      args.method,
           path:        args.path,
@@ -432,8 +432,8 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       }
 
       case 'sap_call_ctms_api': {
-        const tenant = getTenant(config, args.tenant);
-        const result = await callCtmsApi(tenant, {
+        const connection = getConnection(config, args.connection);
+        const result = await callCtmsApi(connection, {
           destination: args.destination,
           method:      args.method,
           path:        args.path,
@@ -446,8 +446,8 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       }
 
       case 'sap_call_forms_api': {
-        const tenant = getTenant(config, args.tenant);
-        const result = await callFormsApi(tenant, {
+        const connection = getConnection(config, args.connection);
+        const result = await callFormsApi(connection, {
           destination: args.destination,
           method:      args.method,
           path:        args.path,
@@ -460,8 +460,8 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       }
 
       case 'sap_call_cis_api': {
-        const tenant = getTenant(config, args.tenant);
-        const result = await callCisApi(tenant, {
+        const connection = getConnection(config, args.connection);
+        const result = await callCisApi(connection, {
           destination: args.destination,
           method:      args.method,
           path:        args.path,
@@ -474,8 +474,8 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       }
 
       case 'sap_call_cpi_api': {
-        const tenant = getTenant(config, args.tenant);
-        const result = await callCpiApi(tenant, {
+        const connection = getConnection(config, args.connection);
+        const result = await callCpiApi(connection, {
           destination: args.destination,
           method:      args.method,
           path:        args.path,

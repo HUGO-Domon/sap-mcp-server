@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
-let current: { tenant: string; destination: string } | null = null;
+let current: { connection: string; destination: string } | null = null;
 
-export function setDestination(tenant: string, destination: string): void {
-  current = { tenant, destination };
+export function setDestination(connection: string, destination: string): void {
+  current = { connection, destination };
 }
 
-export function getCurrentDestination(): { tenant: string; destination: string } | null {
+export function getCurrentDestination(): { connection: string; destination: string } | null {
   return current;
 }

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 import { relay } from './destinations.js';
-import type { TenantConfig } from './config.js';
+import type { ConnectionConfig } from './config.js';
 
 export interface CallFmArgs {
   fm:         string;
@@ -11,9 +11,9 @@ export interface CallFmArgs {
   client?:    string;
 }
 
-export async function callFm(tenant: TenantConfig, destination: string, args: CallFmArgs) {
+export async function callFm(connection: ConnectionConfig, destination: string, args: CallFmArgs) {
   if (!args.client) throw new Error('client（マンダント）が必要です');
-  const data: any = await relay(tenant, '/call-fm', {
+  const data: any = await relay(connection, '/call-fm', {
     destination,
     client:    args.client,
     fm:        args.fm,
@@ -33,9 +33,9 @@ export interface SelectTableArgs {
   client?:  string;
 }
 
-export async function callSelectTable(tenant: TenantConfig, destination: string, args: SelectTableArgs) {
+export async function callSelectTable(connection: ConnectionConfig, destination: string, args: SelectTableArgs) {
   if (!args.client) throw new Error('client（マンダント）が必要です');
-  const data: any = await relay(tenant, '/select', {
+  const data: any = await relay(connection, '/select', {
     destination,
     client:  args.client,
     table:   args.table,
@@ -59,10 +59,10 @@ export interface AdtDdicArgs {
 }
 
 // ADT freestyle / OSQL（パラメータ付き CDS view を含む自由 SQL）
-export async function callAdtFreestyle(tenant: TenantConfig, destination: string, args: AdtSqlArgs) {
+export async function callAdtFreestyle(connection: ConnectionConfig, destination: string, args: AdtSqlArgs) {
   if (!args.client) throw new Error('client（マンダント）が必要です');
   if (!args.sql)    throw new Error('sql が必要です');
-  return relay(tenant, '/adt-freestyle', {
+  return relay(connection, '/adt-freestyle', {
     destination,
     client:   args.client,
     sql:      args.sql,
@@ -70,10 +70,10 @@ export async function callAdtFreestyle(tenant: TenantConfig, destination: string
   });
 }
 
-export async function callAdtOsql(tenant: TenantConfig, destination: string, args: AdtSqlArgs) {
+export async function callAdtOsql(connection: ConnectionConfig, destination: string, args: AdtSqlArgs) {
   if (!args.client) throw new Error('client（マンダント）が必要です');
   if (!args.sql)    throw new Error('sql が必要です');
-  return relay(tenant, '/adt-osql', {
+  return relay(connection, '/adt-osql', {
     destination,
     client:   args.client,
     sql:      args.sql,
@@ -82,10 +82,10 @@ export async function callAdtOsql(tenant: TenantConfig, destination: string, arg
 }
 
 // ADT DDIC（テーブル/CDS 名指定で SELECT *）
-export async function callAdtDdic(tenant: TenantConfig, destination: string, args: AdtDdicArgs) {
+export async function callAdtDdic(connection: ConnectionConfig, destination: string, args: AdtDdicArgs) {
   if (!args.client)   throw new Error('client（マンダント）が必要です');
   if (!args.ddicName) throw new Error('ddicName が必要です');
-  return relay(tenant, '/adt-ddic', {
+  return relay(connection, '/adt-ddic', {
     destination,
     client:   args.client,
     ddicName: args.ddicName,

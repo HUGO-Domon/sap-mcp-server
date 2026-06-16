@@ -79,8 +79,8 @@ chmod 700 "$CONFIG_DIR"
 if [ ! -f "$CONFIG_DIR/connections.json" ]; then
   cat > "$CONFIG_DIR/connections.json.example" <<'EOF'
 {
-  "defaultTenant": "primary",
-  "tenants": {
+  "defaultConnection": "primary",
+  "connections": {
     "primary": {
       "defaultDestination": "<SID>",
       "relayUrl":     "https://your-backend.example.com",
