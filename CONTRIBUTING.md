@@ -1,23 +1,25 @@
 # Contributing
 
-ご関心ありがとうございます。
+**English** | [日本語](CONTRIBUTING.ja.md)
 
-## 開発フロー
+Thanks for your interest!
 
-1. Issue で提案・不具合を共有
-2. fork → feature ブランチ
-3. `npm ci && npm run bundle` でビルド確認
-4. Pull Request（変更内容・動機・テスト結果を記載）
+## Workflow
 
-## 必須ルール
+1. Open an issue to discuss a proposal or bug.
+2. Fork → create a feature branch.
+3. Verify the build with `npm ci && npm run build:bundle`.
+4. Open a Pull Request describing the change, motivation, and test results.
 
-- **機密情報を含めない**: 接続情報・トークン・顧客名・社名・内部ホスト名・本番接続先を
-  コード/README/サンプル/コミット履歴に入れないこと。サンプルは中立なプレースホルダ
-  （`example.com` / `TENANT_A` 等）を使用。
-- コミット前に secret スキャンが通ること（`gitleaks detect`）。CI でも検査します。
-- ライセンスは Apache-2.0。新規ファイルには必要に応じて SPDX ヘッダ
-  `// SPDX-License-Identifier: Apache-2.0` を付与。
+## Required rules
 
-## DCO / 署名
+- **Never include secrets.** Do not put connection details, tokens, customer or company names,
+  internal host names, or production endpoints into code, README, samples, or commit history.
+  Use neutral placeholders (e.g. `example.com`, `TENANT_A`).
+- Secret scanning must pass before committing (`gitleaks detect`); CI checks it as well.
+- The license is Apache-2.0. Add an SPDX header to new files where appropriate:
+  `// SPDX-License-Identifier: Apache-2.0`.
 
-コミットは `git commit -s`（Signed-off-by）を推奨します。
+## DCO / Sign-off
+
+Please sign your commits with `git commit -s` (Signed-off-by).
