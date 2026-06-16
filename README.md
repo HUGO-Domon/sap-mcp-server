@@ -10,6 +10,12 @@ Connect to SAP **ABAP** and **BTP services** from general MCP-compatible AI clie
 **Claude Code** / **Codex** / **Gemini CLI** などの汎用的な MCP 対応クライアントから、SAP の
 **ABAP** および **BTP サービス**へ接続できます。配布は **Node.js SEA による単一バイナリ**（Linux / Windows）です。
 
+> This tool is **not standalone**: it requires a backend service deployed on **SAP BTP, Cloud Foundry**.
+> Through strong, multi‑layered security it accesses **on‑premise / RISE** SAP environments.
+>
+> 本ツールは **単体では動作せず**、**SAP BTP, Cloud Foundry** への Backend サービスの配置を必要とします。
+> 強固な多層セキュリティで **On‑Premise / RISE** の SAP 環境へアクセスします。
+
 ---
 
 ## 🔒 Security / セキュリティ
@@ -29,6 +35,8 @@ SAP への AI アクセスを統制・監査可能に保つため、セキュリ
 ## Capabilities / できること
 
 - **SAP ABAP**
+  - **Run any remote‑enabled Function Module / BAPI without cumbersome web service configuration** —
+    煩雑な Web サービス設定なしで、任意の汎用モジュール（RFC 対応 FM）/ BAPI のリモート実行を可能にします。
   - Function Modules (RFC / BAPI) — `sap_call_fm`
   - Table read (RFC_READ_TABLE 相当) — `sap_select_table`
   - ADT SQL / Open SQL / DDIC preview — `sap_adt_freestyle` / `sap_adt_osql` / `sap_adt_ddic`
