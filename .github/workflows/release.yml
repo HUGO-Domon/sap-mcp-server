@@ -35,6 +35,8 @@ jobs:
         run: cd build && sha256sum sap-mcp-server-linux > sap-mcp-server-linux.sha256
       - name: Attest provenance
         uses: actions/attest-build-provenance@v1
+        # provenance は public repo のみ対応。private の間はスキップ（public 化で自動有効化）。
+        continue-on-error: true
         with:
           subject-path: build/sap-mcp-server-linux
       - name: Upload assets
@@ -51,18 +53,15 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
-      - run: npm run bundle
-      - run: node --experimental-sea-config sea-config.json
       - name: Build Windows binary
-        shell: bash
-        run: |
-          node -e "require('fs').copyFileSync(process.execPath, 'build/sap-mcp-server-win.exe')"
-          npx postject build/sap-mcp-server-win.exe NODE_SEA_BLOB build/sea.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
+        run: npm run build:bin:win
       - name: Checksum
         shell: bash
         run: cd build && sha256sum sap-mcp-server-win.exe > sap-mcp-server-win.exe.sha256
       - name: Attest provenance
         uses: actions/attest-build-provenance@v1
+        # provenance は public repo のみ対応。private の間はスキップ（public 化で自動有効化）。
+        continue-on-error: true
         with:
           subject-path: build/sap-mcp-server-win.exe
       - name: Upload assets
