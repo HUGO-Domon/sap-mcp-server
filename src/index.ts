@@ -33,21 +33,21 @@ const server = new Server(
 const TOOLS = [
   {
     name: 'sap_list_destinations',
-    description: 'BTP サブアカウント上の全 Destination を一覧表示する。Description フィールドから用途（DEV/QAS/PRD など）を識別する用途。',
+    description: 'List all Destinations in the BTP subaccount. Useful for identifying usage (DEV/QAS/PRD, etc.) from the Description field.',
     inputSchema: {
       type: 'object',
       properties: {
-        connection: { type: 'string', description: '接続キー（connections.json の connections のキー）。省略時はデフォルト' },
+        connection: { type: 'string', description: 'Connection key (a key under connections in connections.json). Defaults to the default connection when omitted.' },
       },
     },
   },
   {
     name: 'sap_use_destination',
-    description: 'セッション中のデフォルト Destination を切り替える。以降の sap_call_fm / sap_select_table は省略時にこれを使う。',
+    description: 'Switch the default Destination for the session. Subsequent sap_call_fm / sap_select_table use it when destination is omitted.',
     inputSchema: {
       type: 'object',
       properties: {
-        destination: { type: 'string', description: 'BTP Destination 名' },
+        destination: { type: 'string', description: 'BTP Destination name' },
         connection:  { type: 'string' },
       },
       required: ['destination'],
@@ -55,22 +55,22 @@ const TOOLS = [
   },
   {
     name: 'sap_current_destination',
-    description: '現在のセッションデフォルト Destination を確認する。',
+    description: 'Show the current session-default Destination.',
     inputSchema: { type: 'object', properties: {} },
   },
   {
     name: 'sap_call_fm',
-    description: 'SAP ABAP の Function Module をバックエンドの REST handler 経由で呼び出す。importing には {name, value, abaptype}、tabparams には {name, value=行型名, rows?=入力JSON配列文字列} を渡す。',
+    description: 'Call an SAP ABAP Function Module via the backend REST handler. Pass {name, value, abaptype} in importing, and {name, value=row type name, rows?=input JSON array string} in tabparams.',
     inputSchema: {
       type: 'object',
       properties: {
-        fm:        { type: 'string', description: 'FM 名（例: BAPI_USER_GETLIST）' },
-        importing: { type: 'array',  items: { type: 'object' }, description: '入力。{name, value, abaptype}' },
-        exporting: { type: 'array',  items: { type: 'object' }, description: '出力型ヒント。{name, value=ABAP型名}' },
-        tabparams: { type: 'array',  items: { type: 'object' }, description: 'TABLES。{name, value=行型名, rows?=入力JSON}' },
-        client:    { type: 'string', description: 'sap-client（マンダント）' },
-        commit:    { type: 'boolean', description: 'true で BAPI_TRANSACTION_COMMIT 実行' },
-        destination: { type: 'string', description: 'BTP Destination 名（省略時はセッションデフォルト → connection.defaultDestination）' },
+        fm:        { type: 'string', description: 'FM name (e.g. BAPI_USER_GETLIST)' },
+        importing: { type: 'array',  items: { type: 'object' }, description: 'Input. {name, value, abaptype}' },
+        exporting: { type: 'array',  items: { type: 'object' }, description: 'Output type hints. {name, value=ABAP type name}' },
+        tabparams: { type: 'array',  items: { type: 'object' }, description: 'TABLES. {name, value=row type name, rows?=input JSON}' },
+        client:    { type: 'string', description: 'sap-client (mandant)' },
+        commit:    { type: 'boolean', description: 'When true, runs BAPI_TRANSACTION_COMMIT' },
+        destination: { type: 'string', description: 'BTP Destination name (falls back to the session default, then connection.defaultDestination, when omitted)' },
         connection:  { type: 'string' },
       },
       required: ['fm'],
@@ -78,14 +78,14 @@ const TOOLS = [
   },
   {
     name: 'sap_select_table',
-    description: 'SAP テーブルから動的に SELECT する（RFC_READ_TABLE 相当）。ABAP 側は SELECT * を実行し、fields はクライアント側フィルタとして扱われる。',
+    description: 'Dynamically SELECT from an SAP table (equivalent to RFC_READ_TABLE). The ABAP side runs SELECT *, and fields is applied as a client-side filter.',
     inputSchema: {
       type: 'object',
       properties: {
-        table:   { type: 'string',  description: 'テーブル名（例: T001, MARA）' },
-        fields:  { type: 'array',   items: { type: 'string' }, description: '取得列（クライアント側で絞り込み）' },
-        where:   { type: 'array',   items: { type: 'string' }, description: 'WHERE 句（複数行は AND で連結）' },
-        maxrows: { type: 'integer', description: '最大行数（既定 1000）' },
+        table:   { type: 'string',  description: 'Table name (e.g. T001, MARA)' },
+        fields:  { type: 'array',   items: { type: 'string' }, description: 'Columns to return (filtered client-side)' },
+        where:   { type: 'array',   items: { type: 'string' }, description: 'WHERE clause (multiple lines are joined with AND)' },
+        maxrows: { type: 'integer', description: 'Max rows (default 1000)' },
         client:  { type: 'string' },
         destination: { type: 'string' },
         connection:  { type: 'string' },
@@ -95,13 +95,13 @@ const TOOLS = [
   },
   {
     name: 'sap_adt_freestyle',
-    description: 'ADT REST API 経由で自由 SQL を実行する（/sap/bc/adt/datapreview/freestyle）。パラメータ付き CDS view（例: I_GLAccountLineItemCube( P_DisplayCurrency = \'\' )）も読める。SELECT のみ許可（最大 4000 文字）。',
+    description: 'Run free-form SQL via the ADT REST API (/sap/bc/adt/datapreview/freestyle). Can read parameterized CDS views (e.g. I_GLAccountLineItemCube( P_DisplayCurrency = \'\' )). SELECT only (max 4000 chars).',
     inputSchema: {
       type: 'object',
       properties: {
-        sql:      { type: 'string',  description: 'SELECT 文。CDS パラメータも記述可（例: SELECT ... FROM I_GLAccountLineItemCube( P_DisplayCurrency = \'\' ) WHERE ...）' },
-        rowCount: { type: 'integer', description: '最大行数（既定 100、上限 5000）' },
-        client:   { type: 'string',  description: 'sap-client（マンダント）' },
+        sql:      { type: 'string',  description: 'SELECT statement. CDS parameters allowed (e.g. SELECT ... FROM I_GLAccountLineItemCube( P_DisplayCurrency = \'\' ) WHERE ...)' },
+        rowCount: { type: 'integer', description: 'Max rows (default 100, max 5000)' },
+        client:   { type: 'string',  description: 'sap-client (mandant)' },
         destination: { type: 'string' },
         connection:  { type: 'string' },
       },
@@ -110,12 +110,12 @@ const TOOLS = [
   },
   {
     name: 'sap_adt_osql',
-    description: 'ADT SQL Console 経由で Open SQL を実行する（現状 sap_adt_freestyle と同一エンドポイント。互換用）。',
+    description: 'Run Open SQL via the ADT SQL Console (currently the same endpoint as sap_adt_freestyle; kept for compatibility).',
     inputSchema: {
       type: 'object',
       properties: {
-        sql:      { type: 'string',  description: 'SELECT 文' },
-        rowCount: { type: 'integer', description: '最大行数（既定 100、上限 5000）' },
+        sql:      { type: 'string',  description: 'SELECT statement' },
+        rowCount: { type: 'integer', description: 'Max rows (default 100, max 5000)' },
         client:   { type: 'string' },
         destination: { type: 'string' },
         connection:  { type: 'string' },
@@ -125,12 +125,12 @@ const TOOLS = [
   },
   {
     name: 'sap_adt_ddic',
-    description: 'ADT REST 経由で DDIC オブジェクト（テーブル / CDS view）を SELECT * する。WHERE 不要のクイック確認用。',
+    description: 'SELECT * a DDIC object (table / CDS view) via ADT REST. Quick inspection without a WHERE clause.',
     inputSchema: {
       type: 'object',
       properties: {
-        ddicName: { type: 'string',  description: 'テーブル名 / CDS view 名（英数字・アンダースコア・スラッシュ 30 文字以内）' },
-        rowCount: { type: 'integer', description: '最大行数（既定 100、上限 5000）' },
+        ddicName: { type: 'string',  description: 'Table / CDS view name (alphanumerics, underscore, slash; max 30 chars)' },
+        rowCount: { type: 'integer', description: 'Max rows (default 100, max 5000)' },
         client:   { type: 'string' },
         destination: { type: 'string' },
         connection:  { type: 'string' },
@@ -140,17 +140,17 @@ const TOOLS = [
   },
   {
     name: 'sap_call_ias_admin',
-    description: 'SAP Cloud Identity Services (IAS) Admin API を呼び出す。SCIM Users / Groups / Applications / Schemas / Tenant Setting 等。登録済みの IAS Destination 名を指定。',
+    description: 'Call the SAP Cloud Identity Services (IAS) Admin API. SCIM Users / Groups / Applications / Schemas / Tenant Setting, etc. Specify a registered IAS Destination name.',
     inputSchema: {
       type: 'object',
       properties: {
-        destination: { type: 'string',  description: 'IAS Destination 名' },
-        method:      { type: 'string',  description: 'HTTP メソッド（既定 GET）。例: GET / POST / PUT / PATCH / DELETE' },
-        path:        { type: 'string',  description: 'リソースパス（例: /scim/Users, /scim/Groups, /Applications/v1）' },
-        query:       { type: 'object',  description: 'クエリパラメータ（例: { filter: \'userName eq "foo"\', count: 10 }）' },
-        body:        { description: 'リクエストボディ（JSON-able）' },
-        headers:     { type: 'object',  description: '追加ヘッダ（Accept: application/scim+json 等）' },
-        timeoutMs:   { type: 'integer', description: 'タイムアウト (ms)。既定 60000' },
+        destination: { type: 'string',  description: 'IAS Destination name' },
+        method:      { type: 'string',  description: 'HTTP method (default GET). e.g. GET / POST / PUT / PATCH / DELETE' },
+        path:        { type: 'string',  description: 'Resource path (e.g. /scim/Users, /scim/Groups, /Applications/v1)' },
+        query:       { type: 'object',  description: 'Query parameters (e.g. { filter: \'userName eq "foo"\', count: 10 })' },
+        body:        { description: 'Request body (JSON-able)' },
+        headers:     { type: 'object',  description: 'Extra headers (e.g. Accept: application/scim+json)' },
+        timeoutMs:   { type: 'integer', description: 'Timeout (ms). Default 60000' },
         connection:  { type: 'string' },
       },
       required: ['destination', 'path'],
@@ -158,15 +158,15 @@ const TOOLS = [
   },
   {
     name: 'sap_call_ips_job',
-    description: 'SAP Identity Provisioning Service (IPS) Jobs / JobLogs API を呼び出す。IAS Destination を流用（同一テナント内 /service/scim/Jobs 系）。公式 API は Jobs と JobLogs の 2 リソースのみ。',
+    description: 'Call the SAP Identity Provisioning Service (IPS) Jobs / JobLogs API. Reuses the IAS Destination (same tenant, /service/scim/Jobs family). The public API exposes only the Jobs and JobLogs resources.',
     inputSchema: {
       type: 'object',
       properties: {
-        destination: { type: 'string',  description: 'IAS Destination 名（IPS は IAS と同居）' },
-        method:      { type: 'string',  description: 'HTTP メソッド（既定 GET）' },
-        path:        { type: 'string',  description: 'リソースパス（例: /service/scim/Jobs, /service/scim/JobLogs）' },
+        destination: { type: 'string',  description: 'IAS Destination name (IPS is co-located with IAS)' },
+        method:      { type: 'string',  description: 'HTTP method (default GET)' },
+        path:        { type: 'string',  description: 'Resource path (e.g. /service/scim/Jobs, /service/scim/JobLogs)' },
         query:       { type: 'object' },
-        body:        { description: 'リクエストボディ' },
+        body:        { description: 'Request body' },
         headers:     { type: 'object' },
         timeoutMs:   { type: 'integer' },
         connection:  { type: 'string' },
@@ -176,15 +176,15 @@ const TOOLS = [
   },
   {
     name: 'sap_call_cf_api',
-    description: 'Cloud Foundry API v3 を呼び出す。apps / orgs / spaces / service_instances / service_bindings / scale / restart 等。登録済みの CF API Destination 名を指定（OAuth2Password + cf client）。',
+    description: 'Call the Cloud Foundry API v3. apps / orgs / spaces / service_instances / service_bindings / scale / restart, etc. Specify a registered CF API Destination name (OAuth2Password + cf client).',
     inputSchema: {
       type: 'object',
       properties: {
-        destination: { type: 'string',  description: 'CF API Destination 名' },
-        method:      { type: 'string',  description: 'HTTP メソッド（既定 GET）。読取は GET、操作は POST/PATCH/DELETE' },
-        path:        { type: 'string',  description: 'リソースパス（例: /v3/apps, /v3/organizations, /v3/spaces, /v3/service_instances）' },
-        query:       { type: 'object',  description: 'クエリパラメータ（例: { per_page: 100, names: \'app1,app2\' }）' },
-        body:        { description: 'リクエストボディ（POST/PATCH 用 JSON）' },
+        destination: { type: 'string',  description: 'CF API Destination name' },
+        method:      { type: 'string',  description: 'HTTP method (default GET). GET to read; POST/PATCH/DELETE to operate' },
+        path:        { type: 'string',  description: 'Resource path (e.g. /v3/apps, /v3/organizations, /v3/spaces, /v3/service_instances)' },
+        query:       { type: 'object',  description: 'Query parameters (e.g. { per_page: 100, names: \'app1,app2\' })' },
+        body:        { description: 'Request body (JSON for POST/PATCH)' },
         headers:     { type: 'object' },
         timeoutMs:   { type: 'integer' },
         connection:  { type: 'string' },
@@ -194,15 +194,15 @@ const TOOLS = [
   },
   {
     name: 'sap_call_bwz_content',
-    description: 'Build Work Zone Standard Content API を呼び出す。tiles / groups / roles / pages / content_packages の取得・upload・publish・delete。登録済みの BWZ Content API Destination 名を指定（OAuth2ClientCredentials）。',
+    description: 'Call the Build Work Zone Standard Content API. Get/upload/publish/delete tiles / groups / roles / pages / content_packages. Specify a registered BWZ Content API Destination name (OAuth2ClientCredentials).',
     inputSchema: {
       type: 'object',
       properties: {
-        destination: { type: 'string',  description: 'BWZ Content Destination 名' },
-        method:      { type: 'string',  description: 'HTTP メソッド（既定 GET）' },
-        path:        { type: 'string',  description: 'リソースパス（例: /api/v1/Tiles, /api/v1/Groups, /api/v1/Roles, /api/v1/Pages, /api/v1/ContentPackages）' },
+        destination: { type: 'string',  description: 'BWZ Content Destination name' },
+        method:      { type: 'string',  description: 'HTTP method (default GET)' },
+        path:        { type: 'string',  description: 'Resource path (e.g. /api/v1/Tiles, /api/v1/Groups, /api/v1/Roles, /api/v1/Pages, /api/v1/ContentPackages)' },
         query:       { type: 'object' },
-        body:        { description: 'リクエストボディ' },
+        body:        { description: 'Request body' },
         headers:     { type: 'object' },
         timeoutMs:   { type: 'integer' },
         connection:  { type: 'string' },
@@ -212,15 +212,15 @@ const TOOLS = [
   },
   {
     name: 'sap_call_ctms_api',
-    description: 'SAP Cloud Transport Management v2 API を呼び出す。nodes 一覧 / transportRequests 一覧 / import / queues。登録済みの cTMS Destination 名を指定。クセ: 一覧は nodeId（数値）+ status 必須 + top/skip、インポートは plural transportRequests:[<id>] body。',
+    description: 'Call the SAP Cloud Transport Management v2 API. List nodes / list transportRequests / import / queues. Specify a registered cTMS Destination name. Quirks: listing requires nodeId (numeric) + status + top/skip; import uses a plural transportRequests:[<id>] body.',
     inputSchema: {
       type: 'object',
       properties: {
-        destination: { type: 'string',  description: 'cTMS Destination 名' },
-        method:      { type: 'string',  description: 'HTTP メソッド（既定 GET）' },
-        path:        { type: 'string',  description: 'リソースパス（例: /v2/nodes, /v2/nodes/{nodeId}/transportRequests, /v2/nodes/{nodeId}/transportRequests/import）' },
-        query:       { type: 'object',  description: '例: { status: \'P|R|F\', top: 100, skip: 0 }' },
-        body:        { description: 'リクエストボディ（import は { transportRequests: [\'<id>\'] }）' },
+        destination: { type: 'string',  description: 'cTMS Destination name' },
+        method:      { type: 'string',  description: 'HTTP method (default GET)' },
+        path:        { type: 'string',  description: 'Resource path (e.g. /v2/nodes, /v2/nodes/{nodeId}/transportRequests, /v2/nodes/{nodeId}/transportRequests/import)' },
+        query:       { type: 'object',  description: 'e.g. { status: \'P|R|F\', top: 100, skip: 0 }' },
+        body:        { description: 'Request body (import: { transportRequests: [\'<id>\'] })' },
         headers:     { type: 'object' },
         timeoutMs:   { type: 'integer' },
         connection:  { type: 'string' },
@@ -230,15 +230,15 @@ const TOOLS = [
   },
   {
     name: 'sap_call_forms_api',
-    description: 'SAP Forms Service by Adobe REST API を呼び出す。フォーム生成・ADS 操作・テンプレート登録。登録済みの ADS Destination 名を指定（OpenAPI 3.1 /v3/api-docs で詳細確認可）。',
+    description: 'Call the SAP Forms Service by Adobe REST API. Form generation, ADS operations, template registration. Specify a registered ADS Destination name (details available via OpenAPI 3.1 at /v3/api-docs).',
     inputSchema: {
       type: 'object',
       properties: {
-        destination: { type: 'string',  description: 'Forms Service Destination 名' },
-        method:      { type: 'string',  description: 'HTTP メソッド（既定 GET）' },
-        path:        { type: 'string',  description: 'リソースパス（例: /v3/api-docs, /v1/forms, /v3/forms/{id}/data）' },
+        destination: { type: 'string',  description: 'Forms Service Destination name' },
+        method:      { type: 'string',  description: 'HTTP method (default GET)' },
+        path:        { type: 'string',  description: 'Resource path (e.g. /v3/api-docs, /v1/forms, /v3/forms/{id}/data)' },
         query:       { type: 'object' },
-        body:        { description: 'リクエストボディ（XDP/JSON/PDF）' },
+        body:        { description: 'Request body (XDP/JSON/PDF)' },
         headers:     { type: 'object' },
         timeoutMs:   { type: 'integer' },
         connection:  { type: 'string' },
@@ -248,15 +248,15 @@ const TOOLS = [
   },
   {
     name: 'sap_call_cis_api',
-    description: 'SAP Cloud Information Service (CIS Central) を呼び出す。Global Account / Subaccount / Service Plan / Entitlement 等の参照。登録済みの CIS-Central Destination 名を指定（OAuth2ClientCredentials + GA Viewer/Admin ロール必須）。',
+    description: 'Call the SAP Cloud Information Service (CIS Central). Read Global Account / Subaccount / Service Plan / Entitlement, etc. Specify a registered CIS-Central Destination name (OAuth2ClientCredentials + GA Viewer/Admin role required).',
     inputSchema: {
       type: 'object',
       properties: {
-        destination: { type: 'string',  description: 'CIS Central Destination 名' },
-        method:      { type: 'string',  description: 'HTTP メソッド（既定 GET）' },
-        path:        { type: 'string',  description: 'リソースパス（例: /accounts/v1/globalAccount, /accounts/v1/subaccounts, /entitlements/v1/assignedQuotas）' },
+        destination: { type: 'string',  description: 'CIS Central Destination name' },
+        method:      { type: 'string',  description: 'HTTP method (default GET)' },
+        path:        { type: 'string',  description: 'Resource path (e.g. /accounts/v1/globalAccount, /accounts/v1/subaccounts, /entitlements/v1/assignedQuotas)' },
         query:       { type: 'object' },
-        body:        { description: 'リクエストボディ' },
+        body:        { description: 'Request body' },
         headers:     { type: 'object' },
         timeoutMs:   { type: 'integer' },
         connection:  { type: 'string' },
@@ -266,15 +266,15 @@ const TOOLS = [
   },
   {
     name: 'sap_call_cpi_api',
-    description: 'SAP Integration Suite (CPI) Audit / Monitoring API を呼び出す。iFlow / Channel / Logs / MessageProcessingLogs 等。登録済みの CPI Audit Destination 名を指定。',
+    description: 'Call the SAP Integration Suite (CPI) Audit / Monitoring API. iFlow / Channel / Logs / MessageProcessingLogs, etc. Specify a registered CPI Audit Destination name.',
     inputSchema: {
       type: 'object',
       properties: {
-        destination: { type: 'string',  description: 'CPI Audit Destination 名' },
-        method:      { type: 'string',  description: 'HTTP メソッド（既定 GET）' },
-        path:        { type: 'string',  description: 'リソースパス（例: /api/v1/MessageProcessingLogs, /api/v1/IntegrationPackages, /api/v1/IntegrationRuntimeArtifacts）' },
-        query:       { type: 'object',  description: '例: { $filter: "Status eq \'FAILED\'", $top: 100 }' },
-        body:        { description: 'リクエストボディ' },
+        destination: { type: 'string',  description: 'CPI Audit Destination name' },
+        method:      { type: 'string',  description: 'HTTP method (default GET)' },
+        path:        { type: 'string',  description: 'Resource path (e.g. /api/v1/MessageProcessingLogs, /api/v1/IntegrationPackages, /api/v1/IntegrationRuntimeArtifacts)' },
+        query:       { type: 'object',  description: 'e.g. { $filter: "Status eq \'FAILED\'", $top: 100 }' },
+        body:        { description: 'Request body' },
         headers:     { type: 'object' },
         timeoutMs:   { type: 'integer' },
         connection:  { type: 'string' },
@@ -284,12 +284,12 @@ const TOOLS = [
   },
   {
     name: 'sap_call_btp_cli',
-    description: 'SAP btp CLI を実行する。利用可能なコマンドは SAP 公開リファレンス参照（help.sap.com「Account Administration Using the btp CLI」/ `btp help`）。args に CLI 引数の配列を渡す（例: ["assign","security/role-collection","<RC>","--to-group","<group>","--of-idp","sap.custom","--subaccount","<guid>"]）。login は不要（接続側で自動）。登録済みの btp CLI Destination 名（BasicAuthentication）を指定。',
+    description: 'Run the SAP btp CLI. See the SAP public reference for available commands (help.sap.com "Account Administration Using the btp CLI" / `btp help`). Pass CLI arguments as an array in args (e.g. ["assign","security/role-collection","<RC>","--to-group","<group>","--of-idp","sap.custom","--subaccount","<guid>"]). No login needed (handled by the connection). Specify a registered btp CLI Destination name (BasicAuthentication).',
     inputSchema: {
       type: 'object',
       properties: {
-        destination: { type: 'string',  description: 'btp CLI Destination 名（BasicAuthentication）' },
-        args:        { type: 'array', items: { type: 'string' }, description: 'CLI 引数の配列（login/--url/--user/--password は不要）' },
+        destination: { type: 'string',  description: 'btp CLI Destination name (BasicAuthentication)' },
+        args:        { type: 'array', items: { type: 'string' }, description: 'Array of CLI arguments (no login/--url/--user/--password needed)' },
         timeoutMs:   { type: 'integer' },
         connection:  { type: 'string' },
       },
@@ -298,12 +298,12 @@ const TOOLS = [
   },
   {
     name: 'sap_call_cf_cli',
-    description: 'Cloud Foundry CLI を実行する。利用可能なコマンドは SAP/CF 公開リファレンス参照（cli.cloudfoundry.org / `cf help`）。args に CLI 引数の配列を渡す。api/auth は接続側で自動。登録済みの cf CLI Destination 名を指定。',
+    description: 'Run the Cloud Foundry CLI. See the SAP/CF public reference for available commands (cli.cloudfoundry.org / `cf help`). Pass CLI arguments as an array in args. api/auth are handled by the connection. Specify a registered cf CLI Destination name.',
     inputSchema: {
       type: 'object',
       properties: {
-        destination: { type: 'string',  description: 'cf CLI Destination 名' },
-        args:        { type: 'array', items: { type: 'string' }, description: 'CLI 引数の配列（api/auth は不要）' },
+        destination: { type: 'string',  description: 'cf CLI Destination name' },
+        args:        { type: 'array', items: { type: 'string' }, description: 'Array of CLI arguments (no api/auth needed)' },
         timeoutMs:   { type: 'integer' },
         connection:  { type: 'string' },
       },
@@ -312,12 +312,12 @@ const TOOLS = [
   },
   {
     name: 'sap_call_datasphere_cli',
-    description: 'SAP Datasphere CLI を実行する。利用可能なコマンドは SAP 公開リファレンス参照（`datasphere help`）。args に CLI 引数の配列を渡す。login は接続側で自動。登録済みの Datasphere CLI Destination 名を指定。注: ユーザー個人権限(user_scopes/authorization_code)が必須のコマンドは headless 非対応。',
+    description: 'Run the SAP Datasphere CLI. See the SAP public reference for available commands (`datasphere help`). Pass CLI arguments as an array in args. Login is handled by the connection. Specify a registered Datasphere CLI Destination name. Note: commands that require individual user permissions (user_scopes/authorization_code) are not supported in headless mode.',
     inputSchema: {
       type: 'object',
       properties: {
-        destination: { type: 'string',  description: 'Datasphere CLI Destination 名' },
-        args:        { type: 'array', items: { type: 'string' }, description: 'CLI 引数の配列（login は不要）' },
+        destination: { type: 'string',  description: 'Datasphere CLI Destination name' },
+        args:        { type: 'array', items: { type: 'string' }, description: 'Array of CLI arguments (no login needed)' },
         timeoutMs:   { type: 'integer' },
         connection:  { type: 'string' },
       },
