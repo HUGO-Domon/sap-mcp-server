@@ -11,7 +11,7 @@ import { loadConfig, getConnection }               from './config.js';
 import { listDestinations }                        from './destinations.js';
 import {
   callFm, callSelectTable, callAdtFreestyle, callAdtOsql, callAdtDdic,
-  callAdtReadSource, callAdtWriteSource, callAdtActivate,
+  callAdtReadSource, callAdtWriteSource, callAdtActivate, callAdtDeleteSource,
 } from './abap.js';
 import {
   callIasAdmin, callIpsJob, callCfApi, callBwzContent, callCtmsApi,
@@ -174,6 +174,21 @@ const TOOLS = [
         connection:  { type: 'string' },
       },
       required: ['name', 'source'],
+    },
+  },
+  {
+    name: 'sap_abap_delete_source',
+    description: 'Delete an ABAP report/program via ADT REST. Full mcp scope + DEV-role Destination + custom name (Z*/Y* or /NS/*) required.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name:        { type: 'string', description: 'Program name (Z*/Y* or /NS/*)' },
+        transport:   { type: 'string', description: 'Transport request number (for transportable packages)' },
+        client:      { type: 'string' },
+        destination: { type: 'string' },
+        connection:  { type: 'string' },
+      },
+      required: ['name'],
     },
   },
   {
@@ -493,6 +508,17 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
           transport:   args.transport,
           activate:    args.activate,
           client:      args.client,
+        });
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      }
+
+      case 'sap_abap_delete_source': {
+        const connection = getConnection(config, args.connection);
+        const destName   = resolveDestName(args, connection.id, connection.defaultDestination);
+        const result     = await callAdtDeleteSource(connection, destName, {
+          name:      args.name,
+          transport: args.transport,
+          client:    args.client,
         });
         return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
       }
