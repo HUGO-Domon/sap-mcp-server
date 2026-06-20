@@ -9,7 +9,10 @@ import {
 
 import { loadConfig, getConnection }               from './config.js';
 import { listDestinations }                        from './destinations.js';
-import { callFm, callSelectTable, callAdtFreestyle, callAdtOsql, callAdtDdic } from './abap.js';
+import {
+  callFm, callSelectTable, callAdtFreestyle, callAdtOsql, callAdtDdic,
+  callAdtReadSource, callAdtWriteSource, callAdtActivate,
+} from './abap.js';
 import {
   callIasAdmin, callIpsJob, callCfApi, callBwzContent, callCtmsApi,
   callFormsApi, callCisApi, callCpiApi, callCli,
@@ -136,6 +139,56 @@ const TOOLS = [
         connection:  { type: 'string' },
       },
       required: ['ddicName'],
+    },
+  },
+  {
+    name: 'sap_abap_read_source',
+    description: 'Read ABAP source via ADT REST. objectType "program" reads a report/program; "fm" reads a function module (group required). Read-only (mcp_readonly allowed for DEV/QAS).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name:       { type: 'string', description: 'Object name (program name, or FM name when objectType=fm)' },
+        objectType: { type: 'string', description: '"program" (default) or "fm"' },
+        group:      { type: 'string', description: 'Function group name (required when objectType=fm)' },
+        client:     { type: 'string' },
+        destination:{ type: 'string' },
+        connection: { type: 'string' },
+      },
+      required: ['name'],
+    },
+  },
+  {
+    name: 'sap_abap_write_source',
+    description: 'Create or update an ABAP report/program and (by default) activate it, via ADT REST. Writes require the full mcp scope, a DEV-role Destination, and a custom name (Z*/Y* or /NS/*). Pass the full source as a plain string. Returns activation messages (syntax/activation errors) so they can be fixed and re-submitted.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name:        { type: 'string',  description: 'Program name (Z*/Y* or /NS/*)' },
+        source:      { type: 'string',  description: 'Full ABAP source (plain text)' },
+        description: { type: 'string',  description: 'Program title/description' },
+        package:     { type: 'string',  description: 'Development package (default $TMP = local, no transport)' },
+        transport:   { type: 'string',  description: 'Transport request number (required for transportable packages)' },
+        activate:    { type: 'boolean', description: 'Activate after writing (default true)' },
+        client:      { type: 'string' },
+        destination: { type: 'string' },
+        connection:  { type: 'string' },
+      },
+      required: ['name', 'source'],
+    },
+  },
+  {
+    name: 'sap_abap_activate',
+    description: 'Activate an ABAP object via ADT REST and return activation/syntax messages. Full mcp scope + DEV-role Destination required.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name:        { type: 'string', description: 'Object name' },
+        type:        { type: 'string', description: 'Object type (default PROG)' },
+        client:      { type: 'string' },
+        destination: { type: 'string' },
+        connection:  { type: 'string' },
+      },
+      required: ['name'],
     },
   },
   {
@@ -413,6 +466,44 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
           ddicName: args.ddicName,
           client:   args.client,
           rowCount: args.rowCount,
+        });
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      }
+
+      case 'sap_abap_read_source': {
+        const connection = getConnection(config, args.connection);
+        const destName   = resolveDestName(args, connection.id, connection.defaultDestination);
+        const result     = await callAdtReadSource(connection, destName, {
+          name:       args.name,
+          objectType: args.objectType,
+          group:      args.group,
+          client:     args.client,
+        });
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      }
+
+      case 'sap_abap_write_source': {
+        const connection = getConnection(config, args.connection);
+        const destName   = resolveDestName(args, connection.id, connection.defaultDestination);
+        const result     = await callAdtWriteSource(connection, destName, {
+          name:        args.name,
+          source:      args.source,
+          description: args.description,
+          package:     args.package,
+          transport:   args.transport,
+          activate:    args.activate,
+          client:      args.client,
+        });
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      }
+
+      case 'sap_abap_activate': {
+        const connection = getConnection(config, args.connection);
+        const destName   = resolveDestName(args, connection.id, connection.defaultDestination);
+        const result     = await callAdtActivate(connection, destName, {
+          name:   args.name,
+          type:   args.type,
+          client: args.client,
         });
         return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
       }
