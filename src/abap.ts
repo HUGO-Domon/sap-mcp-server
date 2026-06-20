@@ -92,3 +92,70 @@ export async function callAdtDdic(connection: ConnectionConfig, destination: str
     rowCount: args.rowCount || 100,
   });
 }
+
+// ===== アドオン開発（ADT source CRUD・#9） =====
+
+export interface AdtReadSourceArgs {
+  name:        string;
+  objectType?: 'program' | 'fm';
+  group?:      string;
+  client?:     string;
+}
+
+// ABAP ソース読取（program / function module）
+export async function callAdtReadSource(connection: ConnectionConfig, destination: string, args: AdtReadSourceArgs) {
+  if (!args.client) throw new Error('client（マンダント）が必要です');
+  if (!args.name)   throw new Error('name が必要です');
+  return relay(connection, '/adt-read-source', {
+    destination,
+    client:     args.client,
+    objectType: args.objectType || 'program',
+    name:       args.name,
+    group:      args.group,
+  });
+}
+
+export interface AdtWriteSourceArgs {
+  name:         string;
+  source:       string;
+  description?: string;
+  package?:     string;
+  transport?:   string;
+  activate?:    boolean;
+  client?:      string;
+}
+
+// ABAP レポート/プログラムの作成・更新＋（既定で）活性化。書込のためフル mcp scope が必要。
+export async function callAdtWriteSource(connection: ConnectionConfig, destination: string, args: AdtWriteSourceArgs) {
+  if (!args.client)            throw new Error('client（マンダント）が必要です');
+  if (!args.name)              throw new Error('name が必要です');
+  if (typeof args.source !== 'string') throw new Error('source が必要です');
+  return relay(connection, '/adt-write-source', {
+    destination,
+    client:      args.client,
+    name:        args.name,
+    source:      args.source,
+    description: args.description,
+    package:     args.package,
+    transport:   args.transport,
+    activate:    args.activate,
+  });
+}
+
+export interface AdtActivateArgs {
+  name:    string;
+  type?:   string;
+  client?: string;
+}
+
+// ABAP オブジェクトの活性化（単体）
+export async function callAdtActivate(connection: ConnectionConfig, destination: string, args: AdtActivateArgs) {
+  if (!args.client) throw new Error('client（マンダント）が必要です');
+  if (!args.name)   throw new Error('name が必要です');
+  return relay(connection, '/adt-activate', {
+    destination,
+    client: args.client,
+    name:   args.name,
+    type:   args.type || 'PROG',
+  });
+}
