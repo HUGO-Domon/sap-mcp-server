@@ -194,7 +194,7 @@ const TOOLS = [
   },
   {
     name: 'sap_abap_write_fm',
-    description: 'Create or update an ABAP function module (SE37) and (by default) activate it, via ADT REST. The function group is auto-created if absent. Pass the FULL source including FUNCTION...ENDFUNCTION and the *"-interface comment block (that block defines the signature). Full mcp scope + DEV-role Destination + custom names (Z*/Y* or /NS/*) required.',
+    description: 'Create or update an ABAP function module (SE37) and (by default) activate it, via ADT REST. The function group is auto-created if absent. Pass the source as FUNCTION <name>. ... ENDFUNCTION. WITHOUT the *"-interface comment block (ADT rejects parameter comment blocks on source PUT; parameters are managed as object metadata — currently only parameterless/body-only modules are supported). Full mcp scope + DEV-role Destination + custom names (Z*/Y* or /NS/*) required.',
     inputSchema: {
       type: 'object',
       properties: {
