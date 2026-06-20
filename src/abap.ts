@@ -160,6 +160,75 @@ export async function callAdtDeleteSource(connection: ConnectionConfig, destinat
   });
 }
 
+export interface AdtWriteFmArgs {
+  group:        string;
+  name:         string;
+  source:       string;
+  description?: string;
+  package?:     string;
+  transport?:   string;
+  activate?:    boolean;
+  client?:      string;
+}
+
+// FM（SE37）の作成・更新＋活性化。source は FUNCTION...ENDFUNCTION と `*"` インターフェイスを含む完全ソース。
+export async function callAdtWriteFm(connection: ConnectionConfig, destination: string, args: AdtWriteFmArgs) {
+  if (!args.client)            throw new Error('client（マンダント）が必要です');
+  if (!args.group || !args.name) throw new Error('group と name が必要です');
+  if (typeof args.source !== 'string') throw new Error('source が必要です');
+  return relay(connection, '/adt-write-fm', {
+    destination,
+    client:      args.client,
+    group:       args.group,
+    name:        args.name,
+    source:      args.source,
+    description: args.description,
+    package:     args.package,
+    transport:   args.transport,
+    activate:    args.activate,
+  });
+}
+
+export interface CreateTransportArgs {
+  description: string;
+  type?:       string;
+  target?:     string;
+  devclass?:   string;
+  owner?:      string;
+  client?:     string;
+}
+
+export async function callCreateTransport(connection: ConnectionConfig, destination: string, args: CreateTransportArgs) {
+  if (!args.client)      throw new Error('client（マンダント）が必要です');
+  if (!args.description) throw new Error('description が必要です');
+  return relay(connection, '/adt-create-transport', {
+    destination,
+    client:      args.client,
+    description: args.description,
+    type:        args.type,
+    target:      args.target,
+    devclass:    args.devclass,
+    owner:       args.owner,
+  });
+}
+
+export interface ReleaseTransportArgs {
+  trkorr:      string;
+  simulation?: boolean;
+  client?:     string;
+}
+
+export async function callReleaseTransport(connection: ConnectionConfig, destination: string, args: ReleaseTransportArgs) {
+  if (!args.client) throw new Error('client（マンダント）が必要です');
+  if (!args.trkorr) throw new Error('trkorr が必要です');
+  return relay(connection, '/adt-release-transport', {
+    destination,
+    client:     args.client,
+    trkorr:     args.trkorr,
+    simulation: args.simulation,
+  });
+}
+
 export interface AdtActivateArgs {
   name:    string;
   type?:   string;

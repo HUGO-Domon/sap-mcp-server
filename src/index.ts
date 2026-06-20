@@ -12,6 +12,7 @@ import { listDestinations }                        from './destinations.js';
 import {
   callFm, callSelectTable, callAdtFreestyle, callAdtOsql, callAdtDdic,
   callAdtReadSource, callAdtWriteSource, callAdtActivate, callAdtDeleteSource,
+  callAdtWriteFm, callCreateTransport, callReleaseTransport,
 } from './abap.js';
 import {
   callIasAdmin, callIpsJob, callCfApi, callBwzContent, callCtmsApi,
@@ -189,6 +190,59 @@ const TOOLS = [
         connection:  { type: 'string' },
       },
       required: ['name'],
+    },
+  },
+  {
+    name: 'sap_abap_write_fm',
+    description: 'Create or update an ABAP function module (SE37) and (by default) activate it, via ADT REST. The function group is auto-created if absent. Pass the FULL source including FUNCTION...ENDFUNCTION and the *"-interface comment block (that block defines the signature). Full mcp scope + DEV-role Destination + custom names (Z*/Y* or /NS/*) required.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        group:       { type: 'string',  description: 'Function group (Z*/Y* or /NS/*). Created if it does not exist.' },
+        name:        { type: 'string',  description: 'Function module name (Z*/Y* or /NS/*)' },
+        source:      { type: 'string',  description: 'Full FM source: FUNCTION <name>. *"interface... <body> ENDFUNCTION.' },
+        description: { type: 'string' },
+        package:     { type: 'string',  description: 'Development package (default $TMP)' },
+        transport:   { type: 'string',  description: 'Transport request number (for transportable packages)' },
+        activate:    { type: 'boolean', description: 'Activate after writing (default true)' },
+        client:      { type: 'string' },
+        destination: { type: 'string' },
+        connection:  { type: 'string' },
+      },
+      required: ['group', 'name', 'source'],
+    },
+  },
+  {
+    name: 'sap_create_transport',
+    description: 'Create a transport request (TR_INSERT_REQUEST_WITH_TASKS). Returns the new transport number (trkorr) to pass to write/delete tools for transportable objects. Full mcp scope + DEV-role Destination required.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        description: { type: 'string', description: 'Transport short text' },
+        type:        { type: 'string', description: "Request type: 'K' workbench (default), 'W' customizing" },
+        target:      { type: 'string', description: 'Target system (defaults to the transport route target)' },
+        devclass:    { type: 'string', description: 'Development package (optional)' },
+        owner:       { type: 'string', description: 'Owner user (defaults to the connection user)' },
+        client:      { type: 'string' },
+        destination: { type: 'string' },
+        connection:  { type: 'string' },
+      },
+      required: ['description'],
+    },
+  },
+  {
+    name: 'sap_release_transport',
+    description: 'Release a transport request (TR_RELEASE_REQUEST, headless). Use simulation=true to check without releasing. Releasing exports the request toward its target system. Full mcp scope + DEV-role Destination required.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        trkorr:      { type: 'string',  description: 'Transport request number' },
+        simulation:  { type: 'boolean', description: 'true to simulate (no actual release/export)' },
+        client:      { type: 'string' },
+        destination: { type: 'string' },
+        connection:  { type: 'string' },
+      },
+      required: ['trkorr'],
     },
   },
   {
@@ -519,6 +573,47 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
           name:      args.name,
           transport: args.transport,
           client:    args.client,
+        });
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      }
+
+      case 'sap_abap_write_fm': {
+        const connection = getConnection(config, args.connection);
+        const destName   = resolveDestName(args, connection.id, connection.defaultDestination);
+        const result     = await callAdtWriteFm(connection, destName, {
+          group:       args.group,
+          name:        args.name,
+          source:      args.source,
+          description: args.description,
+          package:     args.package,
+          transport:   args.transport,
+          activate:    args.activate,
+          client:      args.client,
+        });
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      }
+
+      case 'sap_create_transport': {
+        const connection = getConnection(config, args.connection);
+        const destName   = resolveDestName(args, connection.id, connection.defaultDestination);
+        const result     = await callCreateTransport(connection, destName, {
+          description: args.description,
+          type:        args.type,
+          target:      args.target,
+          devclass:    args.devclass,
+          owner:       args.owner,
+          client:      args.client,
+        });
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      }
+
+      case 'sap_release_transport': {
+        const connection = getConnection(config, args.connection);
+        const destName   = resolveDestName(args, connection.id, connection.defaultDestination);
+        const result     = await callReleaseTransport(connection, destName, {
+          trkorr:     args.trkorr,
+          simulation: args.simulation,
+          client:     args.client,
         });
         return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
       }
