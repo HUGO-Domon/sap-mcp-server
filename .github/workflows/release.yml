@@ -42,7 +42,7 @@ jobs:
       - name: Upload assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload "${GITHUB_REF_NAME}" build/sap-mcp-server-linux build/sap-mcp-server-linux.sha256 connections.example.json --clobber --repo "${GITHUB_REPOSITORY}"
+        run: gh release upload "${GITHUB_REF_NAME}" build/sap-mcp-server-linux build/sap-mcp-server-linux.sha256 connections.example.json scripts/install-sap-mcp.sh --clobber --repo "${GITHUB_REPOSITORY}"
 
   build-windows:
     needs: create-release
