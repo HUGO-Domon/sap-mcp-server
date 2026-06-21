@@ -40,6 +40,9 @@ Two scopes — `mcp` (**Full**) and `mcp_readonly` (**Reference-only**) — are 
 | `sap_select_table` | all envs | DEV/QAS only |
 | `sap_call_fm` (incl. `commit`) | all envs | DEV/QAS only |
 | `sap_adt_freestyle` / `osql` / `ddic` | all envs | DEV/QAS only |
+| `sap_abap_read_source` | all envs | DEV/QAS only |
+| `sap_abap_write_source` / `write_fm` / `delete_source` / `activate` (writes) | DEV-role destinations only | **denied** |
+| `sap_create_transport` / `sap_release_transport` | DEV-role destinations only | **denied** |
 | `sap_call_ias_admin` (IAS · PII) | all envs | **denied** |
 | `sap_call_ips_job` (IPS · PII) | all envs | **denied** |
 | `sap_call_cf_api` / `bwz_content` / `ctms_api` / `forms_api` / `cis_api` / `cpi_api` | all envs, any method | `GET` + DEV/QAS only |
@@ -54,6 +57,8 @@ Operational controls (defense in depth): (1) MCP key issuance, (2) scope `mcp` /
   - Function Modules (RFC / BAPI)
   - Table read (RFC_READ_TABLE-equivalent)
   - ADT SQL / Open SQL / DDIC preview
+  - **Add-on development** — read / write / activate / delete reports and function modules (SE37) via ADT
+  - **Transport management** — create / release transport requests (CTS)
 - **SAP BTP services**
   - Cloud Identity Services (IAS) Admin / SCIM
   - Identity Provisioning (IPS) Jobs / JobLogs

@@ -38,6 +38,9 @@ SAP への AI アクセスを統制・監査可能に保つため、セキュリ
 | `sap_select_table` | 全環境 | DEV/QAS のみ |
 | `sap_call_fm`（`commit` 含む） | 全環境 | DEV/QAS のみ |
 | `sap_adt_freestyle` / `osql` / `ddic` | 全環境 | DEV/QAS のみ |
+| `sap_abap_read_source` | 全環境 | DEV/QAS のみ |
+| `sap_abap_write_source` / `write_fm` / `delete_source` / `activate`（書込系） | DEV ロールの Destination のみ | **拒否** |
+| `sap_create_transport` / `sap_release_transport` | DEV ロールの Destination のみ | **拒否** |
 | `sap_call_ias_admin`（IAS・PII） | 全環境 | **拒否** |
 | `sap_call_ips_job`（IPS・PII） | 全環境 | **拒否** |
 | `sap_call_cf_api` / `bwz_content` / `ctms_api` / `forms_api` / `cis_api` / `cpi_api` | 全環境・全メソッド | `GET` + DEV/QAS のみ |
@@ -52,6 +55,8 @@ SAP への AI アクセスを統制・監査可能に保つため、セキュリ
   - 汎用モジュール（RFC / BAPI）
   - テーブル読取（RFC_READ_TABLE 相当）
   - ADT SQL / Open SQL / DDIC プレビュー
+  - **アドオン開発** — ADT 経由でレポート / 汎用モジュール（SE37）を読取 / 作成 / 有効化 / 削除
+  - **移送管理** — 移送リクエスト（CTS）の作成 / リリース
 - **SAP BTP サービス**
   - Cloud Identity Services (IAS) Admin / SCIM
   - Identity Provisioning (IPS) Jobs / JobLogs
