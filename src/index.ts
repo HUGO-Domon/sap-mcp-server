@@ -179,11 +179,12 @@ const TOOLS = [
   },
   {
     name: 'sap_abap_delete_source',
-    description: 'Delete an ABAP report/program via ADT REST. Full mcp scope + DEV-role Destination + custom name (Z*/Y* or /NS/*) required.',
+    description: 'Delete an ABAP report/program (objectType=program, default) or a CDS DDL source / view (objectType=ddls) via ADT REST. CDS deletion works even for inactive-only (never-activated) views. Full mcp scope + DEV-role Destination + custom name (Z*/Y* or /NS/*) required.',
     inputSchema: {
       type: 'object',
       properties: {
-        name:        { type: 'string', description: 'Program name (Z*/Y* or /NS/*)' },
+        name:        { type: 'string', description: 'Object name (Z*/Y* or /NS/*)' },
+        objectType:  { type: 'string', enum: ['program', 'ddls'], description: 'program (report/program, default) or ddls (CDS DDL source/view)' },
         transport:   { type: 'string', description: 'Transport request number (for transportable packages)' },
         client:      { type: 'string' },
         destination: { type: 'string' },
@@ -570,9 +571,10 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
         const connection = getConnection(config, args.connection);
         const destName   = resolveDestName(args, connection.id, connection.defaultDestination);
         const result     = await callAdtDeleteSource(connection, destName, {
-          name:      args.name,
-          transport: args.transport,
-          client:    args.client,
+          name:       args.name,
+          objectType: args.objectType,
+          transport:  args.transport,
+          client:     args.client,
         });
         return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
       }

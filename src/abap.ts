@@ -143,20 +143,22 @@ export async function callAdtWriteSource(connection: ConnectionConfig, destinati
 }
 
 export interface AdtDeleteSourceArgs {
-  name:       string;
-  transport?: string;
-  client?:    string;
+  name:        string;
+  objectType?: 'program' | 'ddls';
+  transport?:  string;
+  client?:     string;
 }
 
-// ABAP レポート/プログラムの削除。書込のためフル mcp scope が必要。
+// ABAP レポート/プログラム（program）または CDS DDL ソース（ddls）の削除。書込のためフル mcp scope が必要。
 export async function callAdtDeleteSource(connection: ConnectionConfig, destination: string, args: AdtDeleteSourceArgs) {
   if (!args.client) throw new Error('client（マンダント）が必要です');
   if (!args.name)   throw new Error('name が必要です');
   return relay(connection, '/adt-delete-source', {
     destination,
-    client:    args.client,
-    name:      args.name,
-    transport: args.transport,
+    client:     args.client,
+    name:       args.name,
+    objectType: args.objectType,
+    transport:  args.transport,
   });
 }
 
