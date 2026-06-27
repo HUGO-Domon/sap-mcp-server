@@ -1,6 +1,6 @@
 {
   "name": "sap-mcp-server",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "description": "Independent open-source MCP server for SAP (ABAP / BTP) via a backend relay",
   "license": "Apache-2.0",
@@ -10,14 +10,14 @@
     "sap-mcp-server": "dist/index.js"
   },
   "scripts": {
-    "build":             "tsc",
-    "start":             "node dist/index.js",
-    "dev":               "tsc --watch",
-    "build:bundle":      "esbuild src/index.ts --bundle --platform=node --target=node22 --format=cjs --outfile=build/bundle.cjs",
-    "build:blob":        "node --experimental-sea-config sea-config.json",
-    "build:bin:linux":   "npm run build:bundle && npm run build:blob && cp $(command -v node) build/sap-mcp-server-linux && npx postject build/sap-mcp-server-linux NODE_SEA_BLOB build/sea.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 && chmod +x build/sap-mcp-server-linux",
-    "build:bin:win":     "npm run build:bundle && npm run build:blob && node -e \"require('fs').copyFileSync(process.execPath,'build/sap-mcp-server-win.exe')\" && npx postject build/sap-mcp-server-win.exe NODE_SEA_BLOB build/sea.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2",
-    "build:bin":         "npm run build:bin:linux"
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch",
+    "build:bundle": "esbuild src/index.ts --bundle --platform=node --target=node22 --format=cjs --outfile=build/bundle.cjs",
+    "build:blob": "node --experimental-sea-config sea-config.json",
+    "build:bin:linux": "npm run build:bundle && npm run build:blob && cp $(command -v node) build/sap-mcp-server-linux && npx postject build/sap-mcp-server-linux NODE_SEA_BLOB build/sea.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 && chmod +x build/sap-mcp-server-linux",
+    "build:bin:win": "npm run build:bundle && npm run build:blob && node -e \"require('fs').copyFileSync(process.execPath,'build/sap-mcp-server-win.exe')\" && npx postject build/sap-mcp-server-win.exe NODE_SEA_BLOB build/sea.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2",
+    "build:bin": "npm run build:bin:linux"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",
