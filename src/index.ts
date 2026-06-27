@@ -16,7 +16,7 @@ import {
 } from './abap.js';
 import {
   callIasAdmin, callIpsJob, callCfApi, callBwzContent, callCtmsApi,
-  callFormsApi, callCisApi, callCpiApi, callAnsApi, callCli,
+  callFormsApi, callCisApi, callCpiApi, callAnsApi, callSbpaApi, callCli,
 } from './btp.js';
 import { setDestination, getCurrentDestination }   from './session.js';
 import { VERSION }                                  from './version.js';
@@ -424,6 +424,24 @@ const TOOLS = [
     },
   },
   {
+    name: 'sap_call_sbpa_api',
+    description: 'Call the SAP Build Process Automation REST API. Workflow API: /workflow/rest/v1/workflow-definitions | task-definitions | workflow-instances | task-instances (GET; POST/PUT/DELETE to operate). Specify a registered SBPA Destination name (OAuth2ClientCredentials).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        destination: { type: 'string',  description: 'SBPA Destination name (e.g. SIC_SBPA_PRD)' },
+        method:      { type: 'string',  description: 'HTTP method (default GET). GET to read; POST/PUT/DELETE to operate' },
+        path:        { type: 'string',  description: 'Resource path (e.g. /workflow/rest/v1/workflow-definitions, /workflow/rest/v1/task-definitions, /workflow/rest/v1/workflow-instances)' },
+        query:       { type: 'object',  description: 'Query parameters' },
+        body:        { description: 'Request body (JSON for POST/PUT)' },
+        headers:     { type: 'object' },
+        timeoutMs:   { type: 'integer' },
+        connection:  { type: 'string' },
+      },
+      required: ['destination', 'path'],
+    },
+  },
+  {
     name: 'sap_call_btp_cli',
     description: 'Run the SAP btp CLI. See the SAP public reference for available commands (help.sap.com "Account Administration Using the btp CLI" / `btp help`). Pass CLI arguments as an array in args (e.g. ["assign","security/role-collection","<RC>","--to-group","<group>","--of-idp","sap.custom","--subaccount","<guid>"]). No login needed (handled by the connection). Specify a registered btp CLI Destination name (BasicAuthentication).',
     inputSchema: {
@@ -764,6 +782,20 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       case 'sap_call_ans_api': {
         const connection = getConnection(config, args.connection);
         const result = await callAnsApi(connection, {
+          destination: args.destination,
+          method:      args.method,
+          path:        args.path,
+          query:       args.query,
+          body:        args.body,
+          headers:     args.headers,
+          timeoutMs:   args.timeoutMs,
+        });
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      }
+
+      case 'sap_call_sbpa_api': {
+        const connection = getConnection(config, args.connection);
+        const result = await callSbpaApi(connection, {
           destination: args.destination,
           method:      args.method,
           path:        args.path,

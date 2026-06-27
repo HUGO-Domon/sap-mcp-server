@@ -91,6 +91,11 @@ export async function callAnsApi(connection: ConnectionConfig, args: BtpCallArgs
   return _call(connection, '/call-ans-api', args);
 }
 
+// SAP Build Process Automation REST API（Workflow / Process / Task 全 API）
+export async function callSbpaApi(connection: ConnectionConfig, args: BtpCallArgs) {
+  return _call(connection, '/call-sbpa-api', args);
+}
+
 // SAP CLI 実行（btp / cf / Datasphere）。公開 REST 不在の操作（例: ロールコレクション↔User Group
 // 割当）を CLI 経由で実行する。relay → connection-backend /internal/cli で直列実行される。
 // 設計: 1016_アプリ設計/_共通機能の設計/10_CLI実行層_設計.md
