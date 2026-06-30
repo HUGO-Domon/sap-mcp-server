@@ -17,7 +17,7 @@ import {
 import {
   callIasAdmin, callIpsJob, callCfApi, callBwzContent, callCtmsApi,
   callFormsApi, callCisApi, callCpiApi, callAnsApi, callSbpaApi, callCli,
-  callDatasphereApi,
+  callDatasphereApi, callCalmApi,
 } from './btp.js';
 import { setDestination, getCurrentDestination }   from './session.js';
 import { VERSION }                                  from './version.js';
@@ -461,6 +461,24 @@ const TOOLS = [
     },
   },
   {
+    name: 'sap_call_calm_api',
+    description: 'Call the SAP Cloud ALM REST API (Landscape / Analytics / Tasks / Projects / Cases / Events etc.). Base host https://<region>.alm.cloud.sap/api. Verified TUP-accessible (2026-06-30): Projects GET /api/calm-projects/v1/projects; Tasks GET /api/calm-tasks/v1/tasks?projectId=<uuid> (projectId required); Landscape /api/calm-landscape/v1/* (e.g. businessServices); Analytics /api/calm-analytics/v1/*. NOTE: API scopes are granted at service-instance creation/update time via xs-security.authorities ($XSMASTERAPPNAME.calm-api.<area>.read/write), NOT at key creation; a route returns 403/404 when the instance lacks that scope. The generic GW 404 body is {"message":"Not Found","status":404}. Specify a registered Cloud ALM Destination name (OAuth2ClientCredentials, e.g. SIC_CALM).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        destination: { type: 'string',  description: 'Cloud ALM Destination name (e.g. SIC_CALM)' },
+        method:      { type: 'string',  description: 'HTTP method (default GET). GET to read; POST/PUT/DELETE to operate' },
+        path:        { type: 'string',  description: 'Resource path (e.g. /api/calm-projects/v1/projects, /api/calm-tasks/v1/tasks, /api/calm-landscape/v1/businessServices)' },
+        query:       { type: 'object',  description: 'Query parameters' },
+        body:        { description: 'Request body (JSON for POST/PUT)' },
+        headers:     { type: 'object' },
+        timeoutMs:   { type: 'integer' },
+        connection:  { type: 'string' },
+      },
+      required: ['destination', 'path'],
+    },
+  },
+  {
     name: 'sap_call_btp_cli',
     description: 'Run the SAP btp CLI. See the SAP public reference for available commands (help.sap.com "Account Administration Using the btp CLI" / `btp help`). Pass CLI arguments as an array in args (e.g. ["assign","security/role-collection","<RC>","--to-group","<group>","--of-idp","sap.custom","--subaccount","<guid>"]). No login needed (handled by the connection). Specify a registered btp CLI Destination name (BasicAuthentication).',
     inputSchema: {
@@ -829,6 +847,20 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       case 'sap_call_datasphere_api': {
         const connection = getConnection(config, args.connection);
         const result = await callDatasphereApi(connection, {
+          destination: args.destination,
+          method:      args.method,
+          path:        args.path,
+          query:       args.query,
+          body:        args.body,
+          headers:     args.headers,
+          timeoutMs:   args.timeoutMs,
+        });
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      }
+
+      case 'sap_call_calm_api': {
+        const connection = getConnection(config, args.connection);
+        const result = await callCalmApi(connection, {
           destination: args.destination,
           method:      args.method,
           path:        args.path,
