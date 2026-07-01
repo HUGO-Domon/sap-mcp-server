@@ -21,6 +21,7 @@ import {
 } from './btp.js';
 import { setDestination, getCurrentDestination }   from './session.js';
 import { VERSION }                                  from './version.js';
+import catalog from './toolCatalog.json';
 
 // --version は connections.json 不要で応答する（loadConfig より先に判定）
 if (process.argv.includes('--version') || process.argv.includes('-v')) {
@@ -35,10 +36,16 @@ const server = new Server(
   { capabilities: { tools: {} } },
 );
 
+// ツールの説明文は単一正本 toolCatalog.json（aiDescription）から取得（ビルド時にバイナリへ焼込）。
+const TOOL_DESC: Record<string, string> = Object.fromEntries(
+  ((catalog as any).tools || []).map((tc: any) => [tc.id, tc.aiDescription || '']),
+);
+const D = (id: string): string => TOOL_DESC[id] || '';
+
 const TOOLS = [
   {
     name: 'sap_list_destinations',
-    description: 'List all Destinations in the BTP subaccount. Useful for identifying usage (DEV/QAS/PRD, etc.) from the Description field.',
+    description: D('sap_list_destinations'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -48,7 +55,7 @@ const TOOLS = [
   },
   {
     name: 'sap_use_destination',
-    description: 'Switch the default Destination for the session. Subsequent sap_call_fm / sap_select_table use it when destination is omitted.',
+    description: D('sap_use_destination'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -60,12 +67,12 @@ const TOOLS = [
   },
   {
     name: 'sap_current_destination',
-    description: 'Show the current session-default Destination.',
+    description: D('sap_current_destination'),
     inputSchema: { type: 'object', properties: {} },
   },
   {
     name: 'sap_call_fm',
-    description: 'Call an SAP ABAP Function Module via the backend REST handler. Pass {name, value, abaptype} in importing, and {name, value=row type name, rows?=input JSON array string} in tabparams.',
+    description: D('sap_call_fm'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -83,7 +90,7 @@ const TOOLS = [
   },
   {
     name: 'sap_select_table',
-    description: 'Dynamically SELECT from an SAP table (equivalent to RFC_READ_TABLE). The ABAP side runs SELECT *, and fields is applied as a client-side filter.',
+    description: D('sap_select_table'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -100,7 +107,7 @@ const TOOLS = [
   },
   {
     name: 'sap_adt_freestyle',
-    description: 'Run free-form SQL via the ADT REST API (/sap/bc/adt/datapreview/freestyle). Can read parameterized CDS views (e.g. I_GLAccountLineItemCube( P_DisplayCurrency = \'\' )). SELECT only (max 4000 chars).',
+    description: D('sap_adt_freestyle'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -115,7 +122,7 @@ const TOOLS = [
   },
   {
     name: 'sap_adt_osql',
-    description: 'Run Open SQL via the ADT SQL Console (currently the same endpoint as sap_adt_freestyle; kept for compatibility).',
+    description: D('sap_adt_osql'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -130,7 +137,7 @@ const TOOLS = [
   },
   {
     name: 'sap_adt_ddic',
-    description: 'SELECT * a DDIC object (table / CDS view) via ADT REST. Quick inspection without a WHERE clause.',
+    description: D('sap_adt_ddic'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -145,7 +152,7 @@ const TOOLS = [
   },
   {
     name: 'sap_abap_read_source',
-    description: 'Read ABAP source via ADT REST. objectType "program" reads a report/program; "fm" reads a function module (group required). Read-only (mcp_readonly allowed for DEV/QAS).',
+    description: D('sap_abap_read_source'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -161,7 +168,7 @@ const TOOLS = [
   },
   {
     name: 'sap_abap_write_source',
-    description: 'Create or update an ABAP report/program and (by default) activate it, via ADT REST. Writes require the full mcp scope, a DEV-role Destination, and a custom name (Z*/Y* or /NS/*). Pass the full source as a plain string. Returns activation messages (syntax/activation errors) so they can be fixed and re-submitted.',
+    description: D('sap_abap_write_source'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -180,7 +187,7 @@ const TOOLS = [
   },
   {
     name: 'sap_abap_delete_source',
-    description: 'Delete an ABAP report/program (objectType=program, default) or a CDS DDL source / view (objectType=ddls) via ADT REST. CDS deletion works even for inactive-only (never-activated) views. Full mcp scope + DEV-role Destination + custom name (Z*/Y* or /NS/*) required.',
+    description: D('sap_abap_delete_source'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -196,7 +203,7 @@ const TOOLS = [
   },
   {
     name: 'sap_abap_write_fm',
-    description: 'Create or update an ABAP function module (SE37) and (by default) activate it, via ADT REST. The function group is auto-created if absent. Pass the source as FUNCTION <name>. ... ENDFUNCTION. WITHOUT the *"-interface comment block (ADT rejects parameter comment blocks on source PUT; parameters are managed as object metadata — currently only parameterless/body-only modules are supported). Full mcp scope + DEV-role Destination + custom names (Z*/Y* or /NS/*) required.',
+    description: D('sap_abap_write_fm'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -216,7 +223,7 @@ const TOOLS = [
   },
   {
     name: 'sap_create_transport',
-    description: 'Create a transport request (TR_INSERT_REQUEST_WITH_TASKS). Returns the new transport number (trkorr) to pass to write/delete tools for transportable objects. Full mcp scope + DEV-role Destination required.',
+    description: D('sap_create_transport'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -234,7 +241,7 @@ const TOOLS = [
   },
   {
     name: 'sap_release_transport',
-    description: 'Release a transport request (TR_RELEASE_REQUEST, headless). Use simulation=true to check without releasing. Releasing exports the request toward its target system. Full mcp scope + DEV-role Destination required.',
+    description: D('sap_release_transport'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -249,7 +256,7 @@ const TOOLS = [
   },
   {
     name: 'sap_abap_activate',
-    description: 'Activate an ABAP object via ADT REST and return activation/syntax messages. Full mcp scope + DEV-role Destination required.',
+    description: D('sap_abap_activate'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -264,7 +271,7 @@ const TOOLS = [
   },
   {
     name: 'sap_call_ias_admin',
-    description: 'Call the SAP Cloud Identity Services (IAS) Admin API. SCIM Users / Groups / Applications / Schemas / Tenant Setting, etc. Specify a registered IAS Destination name.',
+    description: D('sap_call_ias_admin'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -282,7 +289,7 @@ const TOOLS = [
   },
   {
     name: 'sap_call_ips_job',
-    description: 'Call the SAP Identity Provisioning Service (IPS) Jobs / JobLogs API. Reuses the IAS Destination (same tenant, /service/scim/Jobs family). The public API exposes only the Jobs and JobLogs resources.',
+    description: D('sap_call_ips_job'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -300,7 +307,7 @@ const TOOLS = [
   },
   {
     name: 'sap_call_cf_api',
-    description: 'Call the Cloud Foundry API v3. apps / orgs / spaces / service_instances / service_bindings / scale / restart, etc. Specify a registered CF API Destination name (OAuth2Password + cf client).',
+    description: D('sap_call_cf_api'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -318,7 +325,7 @@ const TOOLS = [
   },
   {
     name: 'sap_call_bwz_content',
-    description: 'Call the Build Work Zone Standard Content API. Get/upload/publish/delete tiles / groups / roles / pages / content_packages. Specify a registered BWZ Content API Destination name (OAuth2ClientCredentials).',
+    description: D('sap_call_bwz_content'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -336,7 +343,7 @@ const TOOLS = [
   },
   {
     name: 'sap_call_ctms_api',
-    description: 'Call the SAP Cloud Transport Management v2 API. List nodes / list transportRequests / import / queues. Specify a registered cTMS Destination name. Quirks: listing requires nodeId (numeric) + status + top/skip; import uses a plural transportRequests:[<id>] body.',
+    description: D('sap_call_ctms_api'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -354,7 +361,7 @@ const TOOLS = [
   },
   {
     name: 'sap_call_forms_api',
-    description: 'Call the SAP Forms Service by Adobe REST API. Form generation, ADS operations, template registration. Specify a registered ADS Destination name (details available via OpenAPI 3.1 at /v3/api-docs).',
+    description: D('sap_call_forms_api'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -372,7 +379,7 @@ const TOOLS = [
   },
   {
     name: 'sap_call_cis_api',
-    description: 'Call the SAP Cloud Information Service (CIS Central). Read Global Account / Subaccount / Service Plan / Entitlement, etc. Specify a registered CIS-Central Destination name (OAuth2ClientCredentials + GA Viewer/Admin role required).',
+    description: D('sap_call_cis_api'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -390,7 +397,7 @@ const TOOLS = [
   },
   {
     name: 'sap_call_cpi_api',
-    description: 'Call the SAP Integration Suite (CPI) Audit / Monitoring API. iFlow / Channel / Logs / MessageProcessingLogs, etc. Specify a registered CPI Audit Destination name.',
+    description: D('sap_call_cpi_api'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -408,7 +415,7 @@ const TOOLS = [
   },
   {
     name: 'sap_call_ans_api',
-    description: 'Call the SAP Alert Notification Service REST API (full CRUD across all APIs). Configuration Management API: /cf/configuration/v1/condition | /action | /subscription (GET list / GET by name / POST / PUT / DELETE). Consumer API: /cf/consumer/v1/matched-events | /undelivered-events (GET). Producer API: /cf/producer/v1/resource-events (POST). Specify a registered ANS Destination name (OAuth2ClientCredentials).',
+    description: D('sap_call_ans_api'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -426,7 +433,7 @@ const TOOLS = [
   },
   {
     name: 'sap_call_sbpa_api',
-    description: 'Call the SAP Build Process Automation REST API. Workflow API: /workflow/rest/v1/workflow-definitions | task-definitions | workflow-instances | task-instances (GET; POST/PUT/DELETE to operate). Specify a registered SBPA Destination name (OAuth2ClientCredentials).',
+    description: D('sap_call_sbpa_api'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -444,7 +451,7 @@ const TOOLS = [
   },
   {
     name: 'sap_call_datasphere_api',
-    description: 'Call the SAP Datasphere public REST / OData API with a Technical User OAuth2ClientCredentials Destination. IMPORTANT: SAC-routed APIs require the header x-sap-sac-custom-auth: true (without it the tenant returns the SPA HTML page). Verified TUP-accessible (2026-06-28): Catalog OData V4 GET /api/v1/dwc/catalog/spaces | /assets | /spaces(\'<name>\'); Connections GET /api/v1/datasphere/spaces/{space}/connections; Certificates GET /api/v1/datasphere/configuration/security/certificates; SCIM 2.0 GET /api/v1/scim2/Users | /Groups; Audit export GET /api/v1/audit/activities/exportActivities?startTime&endTime (Accept: application/octet-stream, CSV); Tasks run/monitor POST /api/v1/datasphere/tasks/chains/{space}/run|retry/{objectid}, POST .../cancel/{logid}, GET /api/v1/datasphere/tasks/logs/{space}/objects/{objectid}; Data Sharing Cockpit GET /api/v1/datasphere/marketplace/dsc/providers. NOTE: the internal /dwaas-core/api/v1/* admin APIs are FORBIDDEN for Technical User clients (403 forbiddenOperationForTupOAuthClient) — use the /api/v1/datasphere|dwc|scim2 public APIs above. Distinct from sap_call_datasphere_cli (datasphere CLI; data commands need interactive 3-legged auth).',
+    description: D('sap_call_datasphere_api'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -462,7 +469,7 @@ const TOOLS = [
   },
   {
     name: 'sap_call_calm_api',
-    description: 'Call the SAP Cloud ALM REST API (Landscape / Analytics / Tasks / Projects / Cases / Events etc.). Base host https://<region>.alm.cloud.sap/api. Verified TUP-accessible (2026-06-30): Projects GET /api/calm-projects/v1/projects; Tasks GET /api/calm-tasks/v1/tasks?projectId=<uuid> (projectId required); Landscape /api/calm-landscape/v1/* (e.g. businessServices); Analytics /api/calm-analytics/v1/*. NOTE: API scopes are granted at service-instance creation/update time via xs-security.authorities ($XSMASTERAPPNAME.calm-api.<area>.read/write), NOT at key creation; a route returns 403/404 when the instance lacks that scope. The generic GW 404 body is {"message":"Not Found","status":404}. Specify a registered Cloud ALM Destination name (OAuth2ClientCredentials, e.g. SIC_CALM).',
+    description: D('sap_call_calm_api'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -480,7 +487,7 @@ const TOOLS = [
   },
   {
     name: 'sap_call_btp_cli',
-    description: 'Run the SAP btp CLI. See the SAP public reference for available commands (help.sap.com "Account Administration Using the btp CLI" / `btp help`). Pass CLI arguments as an array in args (e.g. ["assign","security/role-collection","<RC>","--to-group","<group>","--of-idp","sap.custom","--subaccount","<guid>"]). No login needed (handled by the connection). Specify a registered btp CLI Destination name (BasicAuthentication).',
+    description: D('sap_call_btp_cli'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -494,7 +501,7 @@ const TOOLS = [
   },
   {
     name: 'sap_call_cf_cli',
-    description: 'Run the Cloud Foundry CLI. See the SAP/CF public reference for available commands (cli.cloudfoundry.org / `cf help`). Pass CLI arguments as an array in args. api/auth are handled by the connection. Specify a registered cf CLI Destination name.',
+    description: D('sap_call_cf_cli'),
     inputSchema: {
       type: 'object',
       properties: {
@@ -508,7 +515,7 @@ const TOOLS = [
   },
   {
     name: 'sap_call_datasphere_cli',
-    description: 'Run the SAP Datasphere CLI. See the SAP public reference for available commands (`datasphere help`). Pass CLI arguments as an array in args. Login is handled by the connection. Specify a registered Datasphere CLI Destination name. Note: commands that require individual user permissions (user_scopes/authorization_code) are not supported in headless mode.',
+    description: D('sap_call_datasphere_cli'),
     inputSchema: {
       type: 'object',
       properties: {
