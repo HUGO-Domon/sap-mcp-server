@@ -96,8 +96,8 @@
       "no": 4,
       "id": "sap_call_fm",
       "summary": {
-        "ja": "ABAP Function Module 呼出。commit 指定で更新も実行（権限差なし）",
-        "en": "Call ABAP Function Module (commit can update; same for both roles)"
+        "ja": "ABAP Function Module 呼出",
+        "en": "Call ABAP Function Module"
       },
       "officialUrl": "https://help.sap.com/docs/ABAP_PLATFORM_NEW",
       "auth": "BasicAuthentication / PrincipalPropagation",
@@ -984,10 +984,10 @@
       "no": 28,
       "id": "sap_call_btp_cli",
       "summary": {
-        "ja": "btp CLI 実行",
-        "en": "Run btp CLI"
+        "ja": "btp CLI 実行（SAP BTP CLI v2.106.1）",
+        "en": "Run btp CLI (SAP BTP CLI v2.106.1)"
       },
-      "officialUrl": "https://help.sap.com/docs/btp",
+      "officialUrl": "https://help.sap.com/docs/btp/btp-cli-command-reference/btp-cli-command-reference",
       "auth": "BasicAuthentication",
       "callPath": [
         {
@@ -1014,10 +1014,10 @@
       "no": 29,
       "id": "sap_call_cf_cli",
       "summary": {
-        "ja": "Cloud Foundry CLI 実行",
-        "en": "Run Cloud Foundry CLI"
+        "ja": "cf CLI 実行（Cloud Foundry CLI v8.18.3）",
+        "en": "Run cf CLI (Cloud Foundry CLI v8.18.3)"
       },
-      "officialUrl": "https://cli.cloudfoundry.org/",
+      "officialUrl": "https://cli.cloudfoundry.org/en-US/v8/",
       "auth": "OAuth2Password（+ cf client）",
       "callPath": [
         {
@@ -1044,10 +1044,10 @@
       "no": 30,
       "id": "sap_call_datasphere_cli",
       "summary": {
-        "ja": "Datasphere CLI 実行",
-        "en": "Run Datasphere CLI"
+        "ja": "datasphere CLI 実行（SAP Datasphere CLI v2026.13.0）",
+        "en": "Run datasphere CLI (SAP Datasphere CLI v2026.13.0)"
       },
-      "officialUrl": "https://help.sap.com/docs/SAP_DATASPHERE",
+      "officialUrl": "https://help.sap.com/docs/SAP_DATASPHERE/d0ecd6f297ac40249072a44df0549c1a/12d2b51987034daf822511ed1a229a6c.html",
       "auth": "OAuth2ClientCredentials（Datasphere CLI）",
       "callPath": [
         {
