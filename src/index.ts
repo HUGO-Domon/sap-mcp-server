@@ -37,8 +37,13 @@ const server = new Server(
 );
 
 // ツールの説明文は単一正本 toolCatalog.json（aiDescription）から取得（ビルド時にバイナリへ焼込）。
+// AI 向け description = summary(何をするか) + aiDescription(技術詳細) を連結。
 const TOOL_DESC: Record<string, string> = Object.fromEntries(
-  ((catalog as any).tools || []).map((tc: any) => [tc.id, tc.aiDescription || '']),
+  ((catalog as any).tools || []).map((tc: any) => {
+    const s = ((tc.summary && (tc.summary.en || tc.summary.ja)) || '').replace(/[.\s]+$/, '');
+    const d = tc.aiDescription || '';
+    return [tc.id, [s, d].filter(Boolean).join('. ')];
+  }),
 );
 const D = (id: string): string => TOOL_DESC[id] || '';
 

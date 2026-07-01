@@ -1,5 +1,5 @@
 {
-  "_comment": "sap-mcp-server 全ツールの単一正本（Single Source of Truth）。(1) sap-mcp-server/src/index.ts が aiDescription を tool description としてビルド時にバイナリへ焼込。(2) mcp-admin の MCP Tools 画面が summary/overview/auth/callPath/officialUrl/roles を参照（ビルド時に frontend へ同期）。手書き重複（旧 index.ts description / PermissionMatrixPage.js TOOLS）は集約済。aiDescription=AI向け全文 / summary=一覧短文 / overview=モーダル機能概要 / auth=認証方式 / callPath=呼出path例 / officialUrl=公式リファレンス / roles=full(mcp)/ro(mcp_readonly) 差。",
+  "_comment": "sap-mcp-server 全ツールの単一正本（SSOT）。役割で分離: summary=何をするか(人間短文/matrix説明=modal機能概要) / aiDescription=どう使うか(技術詳細のみ:呼出パラメータ/パス/スコープ/クセ・重複回避) / auth/callPath/roles/officialUrl=構造化。 (1) index.ts が『summary.en + aiDescription』を連結して tool description としてビルド時バイナリへ焼込。 (2) mcp-admin MCP Tools 画面が各フィールドを参照（ビルド時 frontend へ同期）。",
   "version": "1.0.0",
   "tools": [
     {
@@ -8,10 +8,6 @@
       "summary": {
         "ja": "接続(Destination)一覧",
         "en": "List Destinations"
-      },
-      "overview": {
-        "ja": "BTP サブアカウントの Destination を一覧。Description から用途(DEV/QAS/PRD)を識別する。",
-        "en": "List Destinations in the BTP subaccount; identify usage (DEV/QAS/PRD) from the Description."
       },
       "officialUrl": "https://help.sap.com/docs/connectivity",
       "auth": "—（Destination Service 接続管理）",
@@ -34,7 +30,7 @@
           "en": "DEV/QAS only"
         }
       },
-      "aiDescription": "List all Destinations in the BTP subaccount. Useful for identifying usage (DEV/QAS/PRD, etc.) from the Description field."
+      "aiDescription": "Returns each destination's name and URL; the Description field indicates DEV/QAS/PRD usage."
     },
     {
       "no": 2,
@@ -42,10 +38,6 @@
       "summary": {
         "ja": "セッション既定の接続を切替",
         "en": "Switch default Destination"
-      },
-      "overview": {
-        "ja": "セッションの既定 Destination を切り替える。以降 destination 省略時に使われる。",
-        "en": "Switch the session default Destination, used when destination is omitted afterward."
       },
       "officialUrl": "https://help.sap.com/docs/connectivity",
       "auth": "—（セッション状態）",
@@ -68,7 +60,7 @@
           "en": "All envs: available"
         }
       },
-      "aiDescription": "Switch the default Destination for the session. Subsequent sap_call_fm / sap_select_table use it when destination is omitted."
+      "aiDescription": "After switching, tools that omit `destination` use this session default."
     },
     {
       "no": 3,
@@ -76,10 +68,6 @@
       "summary": {
         "ja": "現在の既定接続を表示",
         "en": "Show current Destination"
-      },
-      "overview": {
-        "ja": "現在のセッション既定 Destination を表示する。",
-        "en": "Show the current session-default Destination."
       },
       "officialUrl": "https://help.sap.com/docs/connectivity",
       "auth": "—（セッション状態）",
@@ -102,7 +90,7 @@
           "en": "All envs: available"
         }
       },
-      "aiDescription": "Show the current session-default Destination."
+      "aiDescription": "Returns the current session-default destination name."
     },
     {
       "no": 4,
@@ -110,10 +98,6 @@
       "summary": {
         "ja": "ABAP Function Module 呼出。commit 指定で更新も実行（権限差なし）",
         "en": "Call ABAP Function Module (commit can update; same for both roles)"
-      },
-      "overview": {
-        "ja": "ABAP の Function Module を呼ぶ。commit 指定で更新も実行（参照専用でも開発/品質では更新が起きえる）。",
-        "en": "Call an ABAP Function Module; commit can perform updates (read-only can still update on DEV/QAS)."
       },
       "officialUrl": "https://help.sap.com/docs/ABAP_PLATFORM_NEW",
       "auth": "BasicAuthentication / PrincipalPropagation",
@@ -136,7 +120,7 @@
           "en": "DEV/QAS: read; update on commit"
         }
       },
-      "aiDescription": "Call an SAP ABAP Function Module via the backend REST handler. Pass {name, value, abaptype} in importing, and {name, value=row type name, rows?=input JSON array string} in tabparams. 呼出パラメータ: client(SAP マンダント)・destination は必須。importing/tabparams で引数、commit=true で更新実行。"
+      "aiDescription": "Arguments are ARRAYS of structs (a flat {KEY:val} object is NOT delivered): importing:[{name,value,abaptype}], tabparams:[{name,value=<row type name>,rows?=<JSON array string>}]. Required: client (SAP mandant) and destination. commit=true performs the update (works regardless of role). Verify parameter names/types via FUPARAREF (WHERE FUNCNAME='<FM>') before use — never fabricate FM signatures."
     },
     {
       "no": 5,
@@ -144,10 +128,6 @@
       "summary": {
         "ja": "SAP テーブル動的 SELECT",
         "en": "Dynamic table SELECT"
-      },
-      "overview": {
-        "ja": "RFC_READ_TABLE 相当。ABAP 側で SELECT * し fields はクライアント側フィルタ。",
-        "en": "Equivalent to RFC_READ_TABLE; ABAP runs SELECT * and fields filters client-side."
       },
       "officialUrl": "https://help.sap.com/docs/ABAP_PLATFORM_NEW",
       "auth": "BasicAuthentication / PrincipalPropagation",
@@ -170,7 +150,7 @@
           "en": "DEV/QAS: read"
         }
       },
-      "aiDescription": "Dynamically SELECT from an SAP table (equivalent to RFC_READ_TABLE). The ABAP side runs SELECT *, and fields is applied as a client-side filter. 呼出パラメータ: client・destination 必須。table/fields/where/maxrows を指定。"
+      "aiDescription": "RFC_READ_TABLE equivalent (ABAP runs SELECT *, `fields` filters client-side). Required: client, destination. Keep each WHERE/options condition on ONE line (<=72 chars); splitting AND across array lines can concatenate without a space -> syntax error -> 0 rows (append a trailing space per line if you must split). ADT tools are lighter for large reads."
     },
     {
       "no": 6,
@@ -178,10 +158,6 @@
       "summary": {
         "ja": "ADT で自由形式 SQL 実行",
         "en": "Free-form SQL via ADT"
-      },
-      "overview": {
-        "ja": "ADT REST の datapreview/freestyle で自由形式 SQL。パラメトリック CDS も読める。",
-        "en": "Free-form SQL via ADT datapreview/freestyle; can read parameterized CDS views."
       },
       "officialUrl": "https://help.sap.com/docs/ABAP_PLATFORM_NEW",
       "auth": "BasicAuthentication / PrincipalPropagation",
@@ -204,7 +180,7 @@
           "en": "DEV/QAS: read"
         }
       },
-      "aiDescription": "Run free-form SQL via the ADT REST API (/sap/bc/adt/datapreview/freestyle). Can read parameterized CDS views (e.g. I_GLAccountLineItemCube( P_DisplayCurrency = '' )). SELECT only (max 4000 chars). 呼出パラメータ: client・destination 必須。sql(1行/上限あり)。"
+      "aiDescription": "SELECT only, via /sap/bc/adt/datapreview/freestyle. Required: client, destination. Hard limit is 255 chars PER SQL LINE (not a column-count limit) — split long statements across lines. Parameterized CDS `FROM I_View( P_X = '' )` returns 400; use a parameterless SELECT (`FROM I_View`) only."
     },
     {
       "no": 7,
@@ -212,10 +188,6 @@
       "summary": {
         "ja": "ADT で Open SQL 実行",
         "en": "Open SQL via ADT"
-      },
-      "overview": {
-        "ja": "ADT SQL コンソールで Open SQL。現状 freestyle と同一エンドポイント（互換用）。",
-        "en": "Open SQL via ADT SQL Console; currently same endpoint as freestyle (compatibility)."
       },
       "officialUrl": "https://help.sap.com/docs/ABAP_PLATFORM_NEW",
       "auth": "BasicAuthentication / PrincipalPropagation",
@@ -238,7 +210,7 @@
           "en": "DEV/QAS: read"
         }
       },
-      "aiDescription": "Run Open SQL via the ADT SQL Console (currently the same endpoint as sap_adt_freestyle; kept for compatibility). 呼出パラメータ: client・destination 必須。sql を指定。"
+      "aiDescription": "Same endpoint and limits as sap_adt_freestyle (255 chars per line, SELECT only). Required: client, destination."
     },
     {
       "no": 8,
@@ -246,10 +218,6 @@
       "summary": {
         "ja": "DDIC オブジェクト(テーブル/CDS)を SELECT *",
         "en": "SELECT * a DDIC object"
-      },
-      "overview": {
-        "ja": "DDIC オブジェクト(テーブル/CDS ビュー)を WHERE なしで簡易 SELECT *。",
-        "en": "SELECT * a DDIC object (table / CDS view) without a WHERE clause."
       },
       "officialUrl": "https://help.sap.com/docs/ABAP_PLATFORM_NEW",
       "auth": "BasicAuthentication / PrincipalPropagation",
@@ -272,7 +240,7 @@
           "en": "DEV/QAS: read"
         }
       },
-      "aiDescription": "SELECT * a DDIC object (table / CDS view) via ADT REST. Quick inspection without a WHERE clause. 呼出パラメータ: client・destination 必須。ddicName を指定。"
+      "aiDescription": "SELECT * a DDIC object (table / CDS view) without a WHERE clause. Required: client, destination; ddicName."
     },
     {
       "no": 9,
@@ -280,10 +248,6 @@
       "summary": {
         "ja": "ABAP ソース読取",
         "en": "Read ABAP source"
-      },
-      "overview": {
-        "ja": "ADT REST で ABAP ソース読取。program=レポート/プログラム、fm=関数モジュール(グループ要)。",
-        "en": "Read ABAP source via ADT REST; program=report, fm=function module (group required)."
       },
       "officialUrl": "https://help.sap.com/docs/ABAP_PLATFORM_NEW",
       "auth": "BasicAuthentication / PrincipalPropagation",
@@ -306,7 +270,7 @@
           "en": "DEV/QAS: read"
         }
       },
-      "aiDescription": "Read ABAP source via ADT REST. objectType \"program\" reads a report/program; \"fm\" reads a function module (group required). Read-only (mcp_readonly allowed for DEV/QAS). 呼出パラメータ: client・destination 必須。name/objectType(program|fm)/group。"
+      "aiDescription": "Required: client, destination; name; objectType=program|fm (fm needs group)."
     },
     {
       "no": 10,
@@ -314,10 +278,6 @@
       "summary": {
         "ja": "ABAP レポート/プログラム作成・更新＋活性化",
         "en": "Create/update ABAP program + activate"
-      },
-      "overview": {
-        "ja": "ABAP レポート/プログラムを作成・更新し既定で活性化。フル mcp + DEV ロール接続 + カスタム名(Z*/Y*) 必須。",
-        "en": "Create/update an ABAP program and activate; requires full mcp, DEV-role Destination, custom name (Z*/Y*)."
       },
       "officialUrl": "https://help.sap.com/docs/ABAP_PLATFORM_NEW",
       "auth": "BasicAuthentication / PrincipalPropagation",
@@ -340,7 +300,7 @@
           "en": "DEV only: create & update"
         }
       },
-      "aiDescription": "Create or update an ABAP report/program and (by default) activate it, via ADT REST. Writes require the full mcp scope, a DEV-role Destination, and a custom name (Z*/Y* or /NS/*). Pass the full source as a plain string. Returns activation messages (syntax/activation errors) so they can be fixed and re-submitted. 呼出パラメータ: client・destination(DEVロール) 必須。カスタム名(Z*/Y*)・source。"
+      "aiDescription": "Creates/updates then (default) activates. Requires full mcp scope, a DEV-role destination, a custom name (Z*/Y* or /NS/*), and client. Returns activation/syntax messages so errors can be fixed and resubmitted."
     },
     {
       "no": 11,
@@ -348,10 +308,6 @@
       "summary": {
         "ja": "ABAP プログラム/CDS DDL 削除",
         "en": "Delete ABAP program / CDS DDL"
-      },
-      "overview": {
-        "ja": "ABAP プログラム(program) または CDS DDL ソース/ビュー(ddls)を削除。未活性のみの CDS も削除可。",
-        "en": "Delete an ABAP program or CDS DDL source/view; works even for inactive-only CDS."
       },
       "officialUrl": "https://help.sap.com/docs/ABAP_PLATFORM_NEW",
       "auth": "BasicAuthentication / PrincipalPropagation",
@@ -374,7 +330,7 @@
           "en": "DEV only: create & update"
         }
       },
-      "aiDescription": "Delete an ABAP report/program (objectType=program, default) or a CDS DDL source / view (objectType=ddls) via ADT REST. CDS deletion works even for inactive-only (never-activated) views. Full mcp scope + DEV-role Destination + custom name (Z*/Y* or /NS/*) required. 呼出パラメータ: client・destination(DEVロール) 必須。name/objectType(program|ddls)。"
+      "aiDescription": "objectType=program (default) or ddls (CDS DDL — works even for inactive-only views). Requires full mcp, DEV-role destination, custom name, client."
     },
     {
       "no": 12,
@@ -382,10 +338,6 @@
       "summary": {
         "ja": "ABAP Function Module(SE37)作成・更新＋活性化",
         "en": "Create/update ABAP FM + activate"
-      },
-      "overview": {
-        "ja": "ABAP Function Module(SE37)を作成・更新し既定で活性化。関数グループは自動作成。",
-        "en": "Create/update an ABAP function module (SE37) and activate; function group auto-created."
       },
       "officialUrl": "https://help.sap.com/docs/ABAP_PLATFORM_NEW",
       "auth": "BasicAuthentication / PrincipalPropagation",
@@ -408,7 +360,7 @@
           "en": "DEV only: create & update"
         }
       },
-      "aiDescription": "Create or update an ABAP function module (SE37) and (by default) activate it, via ADT REST. The function group is auto-created if absent. Pass the source as FUNCTION <name>. ... ENDFUNCTION. WITHOUT the *\"-interface comment block (ADT rejects parameter comment blocks on source PUT; parameters are managed as object metadata — currently only parameterless/body-only modules are supported). Full mcp scope + DEV-role Destination + custom names (Z*/Y* or /NS/*) required. 呼出パラメータ: client・destination(DEVロール) 必須。group/name/source(FUNCTION..ENDFUNCTION)。"
+      "aiDescription": "Creates/updates an SE37 FM then activates (function group auto-created; FM create requires processingType=normal). ONLY body-only / parameterless FMs — ADT rejects the *\"…parameter interface comment block. For a FM WITH parameters, use RPY_FUNCTIONMODULE_INSERT via sap_call_fm instead. Requires full mcp, DEV-role destination, client."
     },
     {
       "no": 13,
@@ -416,10 +368,6 @@
       "summary": {
         "ja": "移送リクエスト作成",
         "en": "Create transport request"
-      },
-      "overview": {
-        "ja": "移送リクエストを作成(TR_INSERT_REQUEST_WITH_TASKS)。返る trkorr を write/delete に渡す。",
-        "en": "Create a transport request (TR_INSERT_REQUEST_WITH_TASKS); pass the returned trkorr to write/delete tools."
       },
       "officialUrl": "https://help.sap.com/docs/ABAP_PLATFORM_NEW",
       "auth": "BasicAuthentication / PrincipalPropagation",
@@ -442,7 +390,7 @@
           "en": "DEV only: create & update"
         }
       },
-      "aiDescription": "Create a transport request (TR_INSERT_REQUEST_WITH_TASKS). Returns the new transport number (trkorr) to pass to write/delete tools for transportable objects. Full mcp scope + DEV-role Destination required. 呼出パラメータ: client・destination(DEVロール) 必須。description/type/target。"
+      "aiDescription": "TR_INSERT_REQUEST_WITH_TASKS; returns trkorr to pass to write/delete tools. IV_SIMULATION='X' to test. Requires full mcp, DEV-role destination, client."
     },
     {
       "no": 14,
@@ -450,10 +398,6 @@
       "summary": {
         "ja": "移送リクエスト解放",
         "en": "Release transport request"
-      },
-      "overview": {
-        "ja": "移送リクエストを解放(TR_RELEASE_REQUEST, headless)。simulation=true で確認のみ。解放でターゲットへエクスポート。",
-        "en": "Release a transport request (TR_RELEASE_REQUEST); simulation=true to check only; release exports toward target."
       },
       "officialUrl": "https://help.sap.com/docs/ABAP_PLATFORM_NEW",
       "auth": "BasicAuthentication / PrincipalPropagation",
@@ -476,7 +420,7 @@
           "en": "DEV only: create & update"
         }
       },
-      "aiDescription": "Release a transport request (TR_RELEASE_REQUEST, headless). Use simulation=true to check without releasing. Releasing exports the request toward its target system. Full mcp scope + DEV-role Destination required. 呼出パラメータ: client・destination(DEVロール) 必須。trkorr、simulation=true で確認のみ。"
+      "aiDescription": "TR_RELEASE_REQUEST (IV_DIALOG=' ', headless); simulation=true to check without releasing; release exports toward the target system. Requires full mcp, DEV-role destination, client."
     },
     {
       "no": 15,
@@ -484,10 +428,6 @@
       "summary": {
         "ja": "ABAP オブジェクト活性化＋構文チェック",
         "en": "Activate ABAP object"
-      },
-      "overview": {
-        "ja": "ADT REST で ABAP オブジェクトを活性化し、活性化/構文メッセージを返す。",
-        "en": "Activate an ABAP object via ADT REST and return activation/syntax messages."
       },
       "officialUrl": "https://help.sap.com/docs/ABAP_PLATFORM_NEW",
       "auth": "BasicAuthentication / PrincipalPropagation",
@@ -510,7 +450,7 @@
           "en": "DEV only: create & update"
         }
       },
-      "aiDescription": "Activate an ABAP object via ADT REST and return activation/syntax messages. Full mcp scope + DEV-role Destination required. 呼出パラメータ: client・destination(DEVロール) 必須。name/type。"
+      "aiDescription": "Activates an ABAP object and returns activation/syntax messages. Requires full mcp, DEV-role destination, client."
     },
     {
       "no": 16,
@@ -518,10 +458,6 @@
       "summary": {
         "ja": "IAS(Cloud Identity)Admin API。個人情報を扱う",
         "en": "IAS Admin API (personal data)"
-      },
-      "overview": {
-        "ja": "IAS(Cloud Identity Services)Admin API。SCIM Users/Groups/Applications/Schemas/Tenant Settings 等。個人情報を扱う。",
-        "en": "IAS Admin API: SCIM Users/Groups/Applications/Schemas/Tenant Settings, etc. Handles personal data."
       },
       "officialUrl": "https://help.sap.com/docs/identity-authentication",
       "auth": "OAuth2ClientCredentials",
@@ -558,7 +494,7 @@
           "en": "Not available"
         }
       },
-      "aiDescription": "Call the SAP Cloud Identity Services (IAS) Admin API. SCIM Users / Groups / Applications / Schemas / Tenant Setting, etc. Specify a registered IAS Destination name."
+      "aiDescription": "SCIM Users / Groups / Applications / Schemas / Tenant Settings. Handles personal data (full scope only)."
     },
     {
       "no": 17,
@@ -566,10 +502,6 @@
       "summary": {
         "ja": "IPS(Identity Provisioning)Jobs/JobLogs API。個人情報を扱う",
         "en": "IPS Jobs/JobLogs API (personal data)"
-      },
-      "overview": {
-        "ja": "IPS(Identity Provisioning Service)の Jobs/JobLogs API。IAS Destination を再利用。公開 API は Jobs/JobLogs のみ。",
-        "en": "IPS Jobs/JobLogs API; reuses the IAS Destination. Public API exposes only Jobs and JobLogs."
       },
       "officialUrl": "https://help.sap.com/docs/identity-provisioning",
       "auth": "OAuth2ClientCredentials（IAS Destination 再利用）",
@@ -599,7 +531,7 @@
           "en": "Not available"
         }
       },
-      "aiDescription": "Call the SAP Identity Provisioning Service (IPS) Jobs / JobLogs API. Reuses the IAS Destination (same tenant, /service/scim/Jobs family). The public API exposes only the Jobs and JobLogs resources."
+      "aiDescription": "Public API exposes only the Jobs and JobLogs resources (reuses the IAS destination). Personal data (full scope only)."
     },
     {
       "no": 18,
@@ -607,10 +539,6 @@
       "summary": {
         "ja": "Cloud Foundry API v3",
         "en": "Cloud Foundry API v3"
-      },
-      "overview": {
-        "ja": "Cloud Foundry API v3。apps/orgs/spaces/service_instances/service_bindings/scale/restart 等。",
-        "en": "Cloud Foundry API v3: apps/orgs/spaces/service_instances/service_bindings/scale/restart, etc."
       },
       "officialUrl": "https://v3-apidocs.cloudfoundry.org/",
       "auth": "OAuth2Password（+ cf client）",
@@ -647,7 +575,7 @@
           "en": "DEV/QAS: read only"
         }
       },
-      "aiDescription": "Call the Cloud Foundry API v3. apps / orgs / spaces / service_instances / service_bindings / scale / restart, etc. Specify a registered CF API Destination name (OAuth2Password + cf client)."
+      "aiDescription": "v3 API: apps / organizations / spaces / service_instances / service_credential_bindings / scale / restart."
     },
     {
       "no": 19,
@@ -655,10 +583,6 @@
       "summary": {
         "ja": "Build Work Zone Standard Content API",
         "en": "Build Work Zone Content API"
-      },
-      "overview": {
-        "ja": "Build Work Zone Standard の Content API。tiles/groups/roles/pages/content_packages の取得・アップロード・公開・削除。",
-        "en": "Build Work Zone Standard Content API: get/upload/publish/delete tiles/groups/roles/pages/content_packages."
       },
       "officialUrl": "https://help.sap.com/docs/build-work-zone-standard-edition",
       "auth": "OAuth2ClientCredentials",
@@ -688,7 +612,7 @@
           "en": "DEV/QAS: read only"
         }
       },
-      "aiDescription": "Call the Build Work Zone Standard Content API. Get/upload/publish/delete tiles / groups / roles / pages / content_packages. Specify a registered BWZ Content API Destination name (OAuth2ClientCredentials)."
+      "aiDescription": "Get/upload/publish/delete tiles / groups / roles / pages / content_packages."
     },
     {
       "no": 20,
@@ -696,10 +620,6 @@
       "summary": {
         "ja": "Cloud Transport Management v2 API",
         "en": "Cloud Transport Management v2 API"
-      },
-      "overview": {
-        "ja": "SAP Cloud Transport Management v2 API。nodes 一覧 / transportRequests 一覧 / import / queues。",
-        "en": "SAP Cloud Transport Management v2 API: list nodes / transportRequests / import / queues."
       },
       "officialUrl": "https://help.sap.com/docs/cloud-transport-management",
       "auth": "OAuth2ClientCredentials",
@@ -736,7 +656,7 @@
           "en": "DEV/QAS: read only"
         }
       },
-      "aiDescription": "Call the SAP Cloud Transport Management v2 API. List nodes / list transportRequests / import / queues. Specify a registered cTMS Destination name. Quirks: listing requires nodeId (numeric) + status + top/skip; import uses a plural transportRequests:[<id>] body."
+      "aiDescription": "GET /v2/nodes/{nodeId}/transportRequests requires a NUMERIC nodeId + `status` (2-char codes in,ru,re,su,wa,er,fa,de; missing -> 422) + paging `top`/`skip` (NOT $top/$skip). Import: POST /v2/nodes/{nodeId}/transportRequests/import with body {transportRequests:[<id>]}. Owner resolves createdByNamedUser -> createdBy."
     },
     {
       "no": 21,
@@ -744,10 +664,6 @@
       "summary": {
         "ja": "Forms Service by Adobe REST API",
         "en": "Forms Service by Adobe REST API"
-      },
-      "overview": {
-        "ja": "SAP Forms Service by Adobe の REST API。帳票生成・ADS 操作・テンプレート登録。詳細は /v3/api-docs(OpenAPI 3.1)。",
-        "en": "SAP Forms Service by Adobe REST API: form generation, ADS operations, template registration (/v3/api-docs)."
       },
       "officialUrl": "https://help.sap.com/docs/forms-service-by-adobe",
       "auth": "OAuth2ClientCredentials",
@@ -784,7 +700,7 @@
           "en": "DEV/QAS: read only"
         }
       },
-      "aiDescription": "Call the SAP Forms Service by Adobe REST API. Form generation, ADS operations, template registration. Specify a registered ADS Destination name (details available via OpenAPI 3.1 at /v3/api-docs)."
+      "aiDescription": "Form generation, ADS operations, template registration. Full spec at GET /v3/api-docs (OpenAPI 3.1)."
     },
     {
       "no": 22,
@@ -792,10 +708,6 @@
       "summary": {
         "ja": "Cloud Information Service(CIS Central)",
         "en": "CIS Central API"
-      },
-      "overview": {
-        "ja": "SAP Cloud Information Service(CIS Central)。Global Account/Subaccount/Service Plan/Entitlement 等を参照。",
-        "en": "SAP Cloud Information Service (CIS Central): read Global Account/Subaccount/Service Plan/Entitlement, etc."
       },
       "officialUrl": "https://help.sap.com/docs/btp",
       "auth": "OAuth2ClientCredentials（GA Viewer/Admin ロール）",
@@ -832,7 +744,7 @@
           "en": "DEV/QAS: read only"
         }
       },
-      "aiDescription": "Call the SAP Cloud Information Service (CIS Central). Read Global Account / Subaccount / Service Plan / Entitlement, etc. Specify a registered CIS-Central Destination name (OAuth2ClientCredentials + GA Viewer/Admin role required)."
+      "aiDescription": "Read global account / subaccounts / service plans / entitlements. Needs a GA Viewer/Admin role."
     },
     {
       "no": 23,
@@ -840,10 +752,6 @@
       "summary": {
         "ja": "Integration Suite(CPI)Audit/Monitoring API",
         "en": "CPI Audit/Monitoring API"
-      },
-      "overview": {
-        "ja": "SAP Integration Suite(CPI)の Audit/Monitoring API。iFlow/Channel/Logs/MessageProcessingLogs 等。",
-        "en": "SAP Integration Suite (CPI) Audit/Monitoring API: iFlow/Channel/Logs/MessageProcessingLogs, etc."
       },
       "officialUrl": "https://help.sap.com/docs/cloud-integration",
       "auth": "OAuth2ClientCredentials",
@@ -880,7 +788,7 @@
           "en": "DEV/QAS: read only"
         }
       },
-      "aiDescription": "Call the SAP Integration Suite (CPI) Audit / Monitoring API. iFlow / Channel / Logs / MessageProcessingLogs, etc. Specify a registered CPI Audit Destination name."
+      "aiDescription": "Audit / Monitoring: MessageProcessingLogs, IntegrationPackages, IntegrationRuntimeArtifacts."
     },
     {
       "no": 24,
@@ -888,10 +796,6 @@
       "summary": {
         "ja": "Alert Notification Service REST API",
         "en": "Alert Notification Service REST API"
-      },
-      "overview": {
-        "ja": "SAP Alert Notification Service REST API(全 API CRUD)。Configuration(condition/action/subscription)・Producer・Consumer。",
-        "en": "SAP Alert Notification Service REST API (full CRUD): Configuration (condition/action/subscription), Producer, Consumer."
       },
       "officialUrl": "https://help.sap.com/docs/alert-notification",
       "auth": "OAuth2ClientCredentials",
@@ -928,7 +832,7 @@
           "en": "DEV/QAS: read only"
         }
       },
-      "aiDescription": "Call the SAP Alert Notification Service REST API (full CRUD across all APIs). Configuration Management API: /cf/configuration/v1/condition | /action | /subscription (GET list / GET by name / POST / PUT / DELETE). Consumer API: /cf/consumer/v1/matched-events | /undelivered-events (GET). Producer API: /cf/producer/v1/resource-events (POST). Specify a registered ANS Destination name (OAuth2ClientCredentials)."
+      "aiDescription": "Full CRUD. Configuration: /cf/configuration/v1/condition|action|subscription (GET/POST/PUT/DELETE). Consumer: /cf/consumer/v1/matched-events|undelivered-events (GET). Producer: /cf/producer/v1/resource-events (POST)."
     },
     {
       "no": 25,
@@ -936,10 +840,6 @@
       "summary": {
         "ja": "Build Process Automation REST API",
         "en": "Build Process Automation REST API"
-      },
-      "overview": {
-        "ja": "SAP Build Process Automation REST API。Workflow API(workflow-definitions/task-definitions/workflow-instances/task-instances)。",
-        "en": "SAP Build Process Automation REST API: Workflow API (workflow-definitions/task-definitions/workflow-instances/task-instances)."
       },
       "officialUrl": "https://help.sap.com/docs/build-process-automation",
       "auth": "OAuth2ClientCredentials",
@@ -976,7 +876,7 @@
           "en": "DEV/QAS: read only"
         }
       },
-      "aiDescription": "Call the SAP Build Process Automation REST API. Workflow API: /workflow/rest/v1/workflow-definitions | task-definitions | workflow-instances | task-instances (GET; POST/PUT/DELETE to operate). Specify a registered SBPA Destination name (OAuth2ClientCredentials)."
+      "aiDescription": "Workflow API: /workflow/rest/v1/workflow-definitions|task-definitions|workflow-instances|task-instances (GET; POST/PUT/DELETE to operate)."
     },
     {
       "no": 26,
@@ -984,10 +884,6 @@
       "summary": {
         "ja": "Datasphere 公開 REST/OData API",
         "en": "Datasphere public REST/OData API"
-      },
-      "overview": {
-        "ja": "SAP Datasphere 公開 REST/OData API(Technical User)。SAC 経由 API はヘッダ x-sap-sac-custom-auth: true が必要。",
-        "en": "SAP Datasphere public REST/OData API (Technical User). SAC-routed APIs require header x-sap-sac-custom-auth: true."
       },
       "officialUrl": "https://help.sap.com/docs/SAP_DATASPHERE",
       "auth": "OAuth2ClientCredentials（Technical User）",
@@ -1031,7 +927,7 @@
           "en": "DEV/QAS: read only"
         }
       },
-      "aiDescription": "Call the SAP Datasphere public REST / OData API with a Technical User OAuth2ClientCredentials Destination. IMPORTANT: SAC-routed APIs require the header x-sap-sac-custom-auth: true (without it the tenant returns the SPA HTML page). Verified TUP-accessible (2026-06-28): Catalog OData V4 GET /api/v1/dwc/catalog/spaces | /assets | /spaces('<name>'); Connections GET /api/v1/datasphere/spaces/{space}/connections; Certificates GET /api/v1/datasphere/configuration/security/certificates; SCIM 2.0 GET /api/v1/scim2/Users | /Groups; Audit export GET /api/v1/audit/activities/exportActivities?startTime&endTime (Accept: application/octet-stream, CSV); Tasks run/monitor POST /api/v1/datasphere/tasks/chains/{space}/run|retry/{objectid}, POST .../cancel/{logid}, GET /api/v1/datasphere/tasks/logs/{space}/objects/{objectid}; Data Sharing Cockpit GET /api/v1/datasphere/marketplace/dsc/providers. NOTE: the internal /dwaas-core/api/v1/* admin APIs are FORBIDDEN for Technical User clients (403 forbiddenOperationForTupOAuthClient) — use the /api/v1/datasphere|dwc|scim2 public APIs above. Distinct from sap_call_datasphere_cli (datasphere CLI; data commands need interactive 3-legged auth)."
+      "aiDescription": "Technical User. SAC-routed APIs REQUIRE header x-sap-sac-custom-auth: true (else the tenant returns the SPA HTML page). Public APIs: /api/v1/dwc/catalog/*, /api/v1/datasphere/*, /api/v1/scim2/*, /api/v1/audit/*. The internal /dwaas-core/api/v1/* is FORBIDDEN for Technical User clients (403 forbiddenOperationForTupOAuthClient)."
     },
     {
       "no": 27,
@@ -1039,10 +935,6 @@
       "summary": {
         "ja": "Cloud ALM REST API",
         "en": "Cloud ALM REST API"
-      },
-      "overview": {
-        "ja": "SAP Cloud ALM REST API。Projects/Tasks/Analytics/Landscape/Cases、BSM Status Events(read) と Event Situations(close/update) 等。スコープは service-instance の authorities で付与。",
-        "en": "SAP Cloud ALM REST API: Projects/Tasks/Analytics/Landscape/Cases, BSM Status Events (read), Event Situations (close/update). Scopes granted via service-instance authorities."
       },
       "officialUrl": "https://help.sap.com/docs/cloud-alm",
       "auth": "OAuth2ClientCredentials",
@@ -1086,7 +978,7 @@
           "en": "DEV/QAS: read only"
         }
       },
-      "aiDescription": "Call the SAP Cloud ALM REST API (Landscape / Analytics / Tasks / Projects / Cases / Events etc.). Base host https://<region>.alm.cloud.sap/api. Verified TUP-accessible (2026-06-30): Projects GET /api/calm-projects/v1/projects; Tasks GET /api/calm-tasks/v1/tasks?projectId=<uuid> (projectId required); Landscape /api/calm-landscape/v1/* (e.g. businessServices); Analytics /api/calm-analytics/v1/*. NOTE: API scopes are granted at service-instance creation/update time via xs-security.authorities ($XSMASTERAPPNAME.calm-api.<area>.read/write), NOT at key creation; a route returns 403/404 when the instance lacks that scope. The generic GW 404 body is {\"message\":\"Not Found\",\"status\":404}. Specify a registered Cloud ALM Destination name (OAuth2ClientCredentials, e.g. SIC_CALM)."
+      "aiDescription": "Base https://<region>.alm.cloud.sap/api. Scopes are granted on the service-instance (xs-security.authorities $XSMASTERAPPNAME.calm-api.<area>.read/write), NOT on the key — a route returns 403/404 when the instance lacks the scope. Alerts: GET /api/bsm-service/v1/events (scope calm-api.bsm.read). Acknowledge/close: PUT /api/calm-event-situations/v1/event-situations/{id} (scope calm-api.event-situations.write). Tasks require projectId."
     },
     {
       "no": 28,
@@ -1094,10 +986,6 @@
       "summary": {
         "ja": "btp CLI 実行",
         "en": "Run btp CLI"
-      },
-      "overview": {
-        "ja": "SAP btp CLI を実行。account/security/services 等の CRUD。args に CLI 引数配列を渡す。",
-        "en": "Run the SAP btp CLI (account/security/services CRUD); pass CLI args as an array."
       },
       "officialUrl": "https://help.sap.com/docs/btp",
       "auth": "BasicAuthentication",
@@ -1120,7 +1008,7 @@
           "en": "Not available"
         }
       },
-      "aiDescription": "Run the SAP btp CLI. See the SAP public reference for available commands (help.sap.com \"Account Administration Using the btp CLI\" / `btp help`). Pass CLI arguments as an array in args (e.g. [\"assign\",\"security/role-collection\",\"<RC>\",\"--to-group\",\"<group>\",\"--of-idp\",\"sap.custom\",\"--subaccount\",\"<guid>\"]). No login needed (handled by the connection). Specify a registered btp CLI Destination name (BasicAuthentication)."
+      "aiDescription": "Pass CLI args as an array (e.g. [\"list\",\"accounts/subaccount\"]). Login handled by the connection. Full scope only."
     },
     {
       "no": 29,
@@ -1128,10 +1016,6 @@
       "summary": {
         "ja": "Cloud Foundry CLI 実行",
         "en": "Run Cloud Foundry CLI"
-      },
-      "overview": {
-        "ja": "Cloud Foundry CLI を実行。api/auth は接続側で処理。args に CLI 引数配列を渡す。",
-        "en": "Run the Cloud Foundry CLI; api/auth handled by the connection; pass CLI args as an array."
       },
       "officialUrl": "https://cli.cloudfoundry.org/",
       "auth": "OAuth2Password（+ cf client）",
@@ -1154,7 +1038,7 @@
           "en": "Not available"
         }
       },
-      "aiDescription": "Run the Cloud Foundry CLI. See the SAP/CF public reference for available commands (cli.cloudfoundry.org / `cf help`). Pass CLI arguments as an array in args. api/auth are handled by the connection. Specify a registered cf CLI Destination name."
+      "aiDescription": "Pass CLI args as an array (e.g. [\"apps\"]). api/auth handled by the connection. Full scope only."
     },
     {
       "no": 30,
@@ -1162,10 +1046,6 @@
       "summary": {
         "ja": "Datasphere CLI 実行",
         "en": "Run Datasphere CLI"
-      },
-      "overview": {
-        "ja": "SAP Datasphere CLI を実行。ログインは接続側で処理。args に CLI 引数配列を渡す。",
-        "en": "Run the SAP Datasphere CLI; login handled by the connection; pass CLI args as an array."
       },
       "officialUrl": "https://help.sap.com/docs/SAP_DATASPHERE",
       "auth": "OAuth2ClientCredentials（Datasphere CLI）",
@@ -1188,7 +1068,7 @@
           "en": "Not available"
         }
       },
-      "aiDescription": "Run the SAP Datasphere CLI. See the SAP public reference for available commands (`datasphere help`). Pass CLI arguments as an array in args. Login is handled by the connection. Specify a registered Datasphere CLI Destination name. Note: commands that require individual user permissions (user_scopes/authorization_code) are not supported in headless mode."
+      "aiDescription": "Pass CLI args as an array. Login handled by the connection. Commands needing individual user permissions (user_scopes/authorization_code) are not supported in headless mode. Full scope only."
     }
   ]
 }
